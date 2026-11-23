@@ -2,7 +2,7 @@ import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbP
 import { BreadcrumbItem } from '@/types';
 import { Fragment } from 'react';
 
-export function Breadcrumbs({ breadcrumbs }: { breadcrumbs: BreadcrumbItemType[] }) {
+export function Breadcrumbs({ breadcrumbs }) {
     return (
         <>
             {breadcrumbs.length > 0 && (
