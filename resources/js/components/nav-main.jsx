@@ -1,4 +1,5 @@
 import { SidebarGroup, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
+import { usePage } from '@inertiajs/react';
 
 export function NavMain({ items = [] }) {
     const page = usePage();
