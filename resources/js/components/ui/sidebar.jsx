@@ -1,7 +1,7 @@
 import { Slot } from '@radix-ui/react-slot';
 import { cva } from 'class-variance-authority';
 import { PanelLeft } from 'lucide-react';
-import *;
+import * as React from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -38,8 +38,7 @@ const SidebarProvider = React.forwardRef(({ defaultOpen = true, open: openProp, 
     const open = openProp ?? _open;
     const setOpen = React.useCallback(
         (value) => {
-            const openState = typeof value === 'function' ? value(open) : value;
-            if (setOpenProp) {
+            const openState = typeof value === 'function' ? value(open) {
                 setOpenProp(openState);
             } else {
                 _setOpen(openState);
@@ -51,12 +50,7 @@ const SidebarProvider = React.forwardRef(({ defaultOpen = true, open: openProp, 
     );
 
     const toggleSidebar = React.useCallback(() => {
-        return isMobile ? setOpenMobile((open) => !open) : setOpen((open) => !open);
-    }, [isMobile, setOpen, setOpenMobile]);
-
-    React.useEffect(() => {
-        const handleMobileNavigation = () => {
-            if (isMobile) {
+        return isMobile ? setOpenMobile((open) => !open) {
                 setOpenMobile(false);
             }
         };

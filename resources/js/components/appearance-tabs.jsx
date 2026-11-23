@@ -3,7 +3,7 @@ import { cn } from '@/lib/utils';
 import { LucideIcon, Monitor, Moon, Sun } from 'lucide-react';
 import { HTMLAttributes } from 'react';
 
-export default function AppearanceToggleTab({ className = '', ...props }: HTMLAttributes<HTMLDivElement>) {
+export default function AppearanceToggleTab({ className = '', ...props }) {
     const { appearance, updateAppearance } = useAppearance();
 
     const tabs = [

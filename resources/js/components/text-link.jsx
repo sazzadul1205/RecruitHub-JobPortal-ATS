@@ -1,7 +1,7 @@
 import { cn } from '@/lib/utils';
 import { Link } from '@inertiajs/react';
-import { ComponentProps } from 'react';
-export default function TextLink({ className = '', children, ...props }: LinkProps) {
+
+export default function TextLink({ className = '', children, ...props }) {
     return (
         <Link
             className={cn(
