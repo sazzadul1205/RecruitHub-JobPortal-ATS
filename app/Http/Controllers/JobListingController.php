@@ -19,8 +19,6 @@ class JobListingController extends Controller
 {
 public function adminIndex(Request $request): Response
     {
-        abort_unless(\Gate::allows('viewAnyJobListing'), 403);
-
         $query = JobListing::with(['employer', 'category', 'locations']);
 
         if ($request->filled('status')) {
@@ -63,7 +61,6 @@ public function adminIndex(Request $request): Response
 
     public function adminCreate(): Response
     {
-        abort_unless(\Gate::allows('createJobListing'), 403);
 
         return Inertia::render('jobs/admin-create', [
             'categories' => JobCategory::active()->get(),
@@ -76,7 +73,6 @@ public function adminIndex(Request $request): Response
 
     public function adminStore(Request $request): RedirectResponse
     {
-        abort_unless(\Gate::allows('createJobListing'), 403);
 
         $validated = $request->validate([
             'category_id' => 'nullable|exists:job_categories,id',
@@ -112,7 +108,7 @@ public function adminIndex(Request $request): Response
 
     public function adminShow(JobListing $jobListing): Response
     {
-        abort_unless(\Gate::allows('viewJobListing', $jobListing), 403);
+        abort_unless(auth()->user()->isAdmin() || $jobListing->user_id === auth()->id(), 403);
 
         $jobListing->load(['employer', 'category', 'locations', 'applications.user']);
 
@@ -123,7 +119,7 @@ public function adminIndex(Request $request): Response
 
     public function adminEdit(JobListing $jobListing): Response
     {
-        abort_unless(\Gate::allows('updateJobListing', $jobListing), 403);
+        abort_unless(auth()->user()->isAdmin() || $jobListing->user_id === auth()->id(), 403);
 
         return Inertia::render('jobs/admin-edit', [
             'job' => $jobListing,
@@ -137,7 +133,7 @@ public function adminIndex(Request $request): Response
 
     public function adminUpdate(Request $request, JobListing $jobListing): RedirectResponse
     {
-        abort_unless(\Gate::allows('updateJobListing', $jobListing), 403);
+        abort_unless(auth()->user()->isAdmin() || $jobListing->user_id === auth()->id(), 403);
 
         $validated = $request->validate([
             'category_id' => 'nullable|exists:job_categories,id',
@@ -171,7 +167,6 @@ public function adminIndex(Request $request): Response
 
     public function adminDestroy(JobListing $jobListing): RedirectResponse
     {
-        abort_unless(\Gate::allows('deleteJobListing', $jobListing), 403);
 
         $jobListing->delete();
 
@@ -180,7 +175,6 @@ public function adminIndex(Request $request): Response
 
     public function toggleActive(JobListing $jobListing): RedirectResponse
     {
-        abort_unless(\Gate::allows('toggleActiveJobListing'), 403);
 
         $jobListing->update(['is_active' => ! $jobListing->is_active]);
 
@@ -189,7 +183,6 @@ public function adminIndex(Request $request): Response
 
     public function restore(JobListing $jobListing): RedirectResponse
     {
-        abort_unless(\Gate::allows('restoreJobListing'), 403);
 
         $jobListing->restore();
 
@@ -198,7 +191,6 @@ public function adminIndex(Request $request): Response
 
     public function forceDelete(JobListing $jobListing): RedirectResponse
     {
-        abort_unless(\Gate::allows('forceDeleteJobListing'), 403);
 
         $jobListing->forceDelete();
 
@@ -207,7 +199,6 @@ public function adminIndex(Request $request): Response
 
     public function applications(JobListing $jobListing): Response
     {
-        abort_unless(\Gate::allows('viewJobListingApplications'), 403);
 
         $applications = $jobListing->applications()->with('user')->latest()->paginate(15);
 
@@ -219,7 +210,6 @@ public function adminIndex(Request $request): Response
 
     public function bulkActivate(Request $request): RedirectResponse
     {
-        abort_unless(\Gate::allows('bulkActivateJobListing'), 403);
 
         $request->validate(['ids' => 'required|array']);
 
@@ -230,7 +220,6 @@ public function adminIndex(Request $request): Response
 
     public function bulkDeactivate(Request $request): RedirectResponse
     {
-        abort_unless(\Gate::allows('bulkDeactivateJobListing'), 403);
 
         $request->validate(['ids' => 'required|array']);
 
@@ -241,7 +230,6 @@ public function adminIndex(Request $request): Response
 
     public function bulkDelete(Request $request): RedirectResponse
     {
-        abort_unless(\Gate::allows('bulkDeleteJobListing'), 403);
 
         $request->validate(['ids' => 'required|array']);
 
@@ -252,7 +240,6 @@ public function adminIndex(Request $request): Response
 
     public function statistics(): Response
     {
-        abort_unless(\Gate::allows('viewJobListingStatistics'), 403);
 
         $stats = [
             'jobs_by_type' => JobListing::selectRaw('job_type, count(*) as count')->groupBy('job_type')->get(),

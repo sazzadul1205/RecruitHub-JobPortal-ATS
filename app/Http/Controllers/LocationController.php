@@ -12,7 +12,6 @@ class LocationController extends Controller
 {
     public function index(): Response
     {
-        abort_unless(\Gate::allows('viewAnyLocation'), 403);
 
         $locations = Location::withCount('listings')->latest()->paginate(15);
 
@@ -23,7 +22,6 @@ class LocationController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        abort_unless(\Gate::allows('createLocation'), 403);
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -39,7 +37,6 @@ class LocationController extends Controller
 
     public function update(Request $request, Location $location): RedirectResponse
     {
-        abort_unless(\Gate::allows('updateLocation', $location), 403);
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -55,7 +52,6 @@ class LocationController extends Controller
 
     public function toggleActive(Location $location): RedirectResponse
     {
-        abort_unless(\Gate::allows('toggleActiveLocation'), 403);
 
         $location->update(['is_active' => ! $location->is_active]);
 
@@ -64,7 +60,6 @@ class LocationController extends Controller
 
     public function destroy(Location $location): RedirectResponse
     {
-        abort_unless(\Gate::allows('deleteLocation'), 403);
 
         $location->delete();
 
@@ -73,7 +68,6 @@ class LocationController extends Controller
 
     public function restore(Location $location): RedirectResponse
     {
-        abort_unless(\Gate::allows('restoreLocation'), 403);
 
         $location->restore();
 
@@ -82,7 +76,6 @@ class LocationController extends Controller
 
     public function forceDelete(Location $location): RedirectResponse
     {
-        abort_unless(\Gate::allows('forceDeleteLocation'), 403);
 
         $location->forceDelete();
 
@@ -91,7 +84,6 @@ class LocationController extends Controller
 
     public function bulkDelete(Request $request): RedirectResponse
     {
-        abort_unless(\Gate::allows('bulkDeleteLocation'), 403);
 
         $request->validate(['ids' => 'required|array']);
 
@@ -102,7 +94,6 @@ class LocationController extends Controller
 
     public function bulkRestore(Request $request): RedirectResponse
     {
-        abort_unless(\Gate::allows('bulkRestoreLocation'), 403);
 
         $request->validate(['ids' => 'required|array']);
 
@@ -113,7 +104,6 @@ class LocationController extends Controller
 
     public function bulkActivate(Request $request): RedirectResponse
     {
-        abort_unless(\Gate::allows('bulkActivateLocation'), 403);
 
         $request->validate(['ids' => 'required|array']);
 
@@ -124,7 +114,6 @@ class LocationController extends Controller
 
     public function bulkDeactivate(Request $request): RedirectResponse
     {
-        abort_unless(\Gate::allows('bulkDeactivateLocation'), 403);
 
         $request->validate(['ids' => 'required|array']);
 

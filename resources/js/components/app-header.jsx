@@ -9,7 +9,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { UserMenuContent } from '@/components/user-menu-content';
 import { useInitials } from '@/hooks/use-initials';
 import { cn } from '@/lib/utils';
-import { BreadcrumbItem, NavItem, SharedData } from '@/types';
+
 import { Link, usePage } from '@inertiajs/react';
 import { BookOpen, Folder, LayoutGrid, Menu, Search } from 'lucide-react';
 import AppLogo from './app-logo';

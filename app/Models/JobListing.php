@@ -156,9 +156,4 @@ class JobListing extends Model
         return ($this->publish_at === null || $this->publish_at <= $now)
             && ($this->application_deadline === null || $this->application_deadline >= $now);
     }
-
-    public function getRouteKeyName(): string
-    {
-        return 'slug';
-    }
 }

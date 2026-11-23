@@ -16,7 +16,6 @@ class ApplicationsController extends Controller
 {
     public function index(Request $request): Response
     {
-        abort_unless(\Gate::allows('viewAnyApplication'), 403);
 
         $query = Application::with(['user', 'jobListing', 'applicantProfile']);
 
@@ -48,7 +47,6 @@ class ApplicationsController extends Controller
 
     public function jobApplications(JobListing $jobListing): Response
     {
-        abort_unless(\Gate::allows('viewJobApplications'), 403);
 
         $applications = $jobListing->applications()->with('user')->latest()->paginate(15);
 
@@ -60,7 +58,6 @@ class ApplicationsController extends Controller
 
     public function show(Application $application): Response
     {
-        abort_unless(\Gate::allows('viewApplication', $application), 403);
 
         $application->load(['user', 'jobListing', 'applicantProfile', 'statusTimelines']);
 
@@ -72,7 +69,6 @@ class ApplicationsController extends Controller
 
     public function updateStatus(Request $request, Application $application): RedirectResponse
     {
-        abort_unless(\Gate::allows('updateApplicationStatus'), 403);
 
         $validated = $request->validate([
             'status' => 'required|in:pending,shortlisted,rejected,hired',
@@ -100,7 +96,6 @@ class ApplicationsController extends Controller
 
     public function bulkUpdateStatus(Request $request): RedirectResponse
     {
-        abort_unless(\Gate::allows('bulkUpdateApplicationStatus'), 403);
 
         $validated = $request->validate([
             'ids' => 'required|array',
@@ -122,7 +117,6 @@ class ApplicationsController extends Controller
 
     public function destroy(Application $application): RedirectResponse
     {
-        abort_unless(\Gate::allows('deleteApplication', $application), 403);
 
         $application->delete();
 
@@ -131,7 +125,6 @@ class ApplicationsController extends Controller
 
     public function bulkDelete(Request $request): RedirectResponse
     {
-        abort_unless(\Gate::allows('bulkDeleteApplication'), 403);
 
         $request->validate(['ids' => 'required|array']);
 
@@ -142,7 +135,6 @@ class ApplicationsController extends Controller
 
     public function downloadResume(Application $application)
     {
-        abort_unless(\Gate::allows('downloadResume'), 403);
 
         if (! $application->resume_path || ! \Storage::disk('private')->exists($application->resume_path)) {
             abort(404);
@@ -153,7 +145,6 @@ class ApplicationsController extends Controller
 
     public function bulkDownloadResumes(Request $request)
     {
-        abort_unless(\Gate::allows('bulkDownloadResumes'), 403);
 
         $request->validate(['ids' => 'required|array']);
 
@@ -177,7 +168,6 @@ class ApplicationsController extends Controller
 
     public function sendEmail(Request $request, Application $application): RedirectResponse
     {
-        abort_unless(\Gate::allows('sendApplicationEmail'), 403);
 
         $request->validate([
             'subject' => 'required|string',
@@ -196,7 +186,6 @@ class ApplicationsController extends Controller
 
     public function sendBulkEmail(Request $request): RedirectResponse
     {
-        abort_unless(\Gate::allows('bulkSendApplicationEmail'), 403);
 
         $request->validate([
             'ids' => 'required|array',
@@ -220,7 +209,6 @@ class ApplicationsController extends Controller
 
     public function recalculateAts(Application $application): RedirectResponse
     {
-        abort_unless(\Gate::allows('recalculateAts'), 403);
 
         $app = app(ATSService::class);
         $app->calculate($application);
@@ -230,7 +218,6 @@ class ApplicationsController extends Controller
 
     public function exportApplications(Request $request, $jobId): RedirectResponse
     {
-        abort_unless(\Gate::allows('exportApplications'), 403);
 
         $applications = Application::where('job_listing_id', $jobId)->with('user')->get();
 
@@ -261,7 +248,6 @@ class ApplicationsController extends Controller
 
     public function exportSingleApplication(Application $application): RedirectResponse
     {
-        abort_unless(\Gate::allows('exportSingleApplication'), 403);
 
         $headers = [
             'Content-Type' => 'text/csv',
