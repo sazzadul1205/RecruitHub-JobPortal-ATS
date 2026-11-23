@@ -2,8 +2,8 @@
 
 namespace Database\Factories;
 
-use App\Models\Application;
 use App\Models\ApplicantProfile;
+use App\Models\Application;
 use App\Models\JobListing;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -26,7 +26,7 @@ class ApplicationFactory extends Factory
             'expected_salary' => fake()->randomElement([null, 50000, 75000, 100000]),
             'facebook_link' => fake()->optional()->url(),
             'linkedin_link' => fake()->optional()->url(),
-            'resume_path' => 'resumes/' . fake()->uuid() . '.pdf',
+            'resume_path' => 'resumes/'.fake()->uuid().'.pdf',
             'ats_score' => null,
             'matched_keywords' => null,
             'missing_keywords' => null,

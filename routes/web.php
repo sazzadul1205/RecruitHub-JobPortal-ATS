@@ -1,21 +1,11 @@
 <?php
 
-use App\Http\Controllers\ApplyController;
 use App\Http\Controllers\ApplicationsController;
-use App\Http\Controllers\Auth\AuthenticatedSessionController;
-use App\Http\Controllers\Auth\ConfirmablePasswordController;
-use App\Http\Controllers\Auth\EmailVerificationNotificationController;
-use App\Http\Controllers\Auth\EmailVerificationPromptController;
-use App\Http\Controllers\Auth\NewPasswordController;
-use App\Http\Controllers\Auth\PasswordResetLinkController;
-use App\Http\Controllers\Auth\RegisteredUserController;
-use App\Http\Controllers\Auth\VerifyEmailController;
+use App\Http\Controllers\ApplyController;
 use App\Http\Controllers\JobCategoryController;
 use App\Http\Controllers\JobListingController;
 use App\Http\Controllers\LocationController;
 use App\Http\Controllers\PublicJobListingController;
-use App\Http\Controllers\Settings\PasswordController;
-use App\Http\Controllers\Settings\ProfileController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 

@@ -2,8 +2,8 @@
 
 namespace Database\Factories;
 
-use App\Models\JobHistory;
 use App\Models\ApplicantProfile;
+use App\Models\JobHistory;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class JobHistoryFactory extends Factory
@@ -13,6 +13,7 @@ class JobHistoryFactory extends Factory
     public function definition(): array
     {
         $startYear = fake()->numberBetween(2015, 2023);
+
         return [
             'applicant_profile_id' => ApplicantProfile::factory(),
             'company_name' => fake()->company(),

@@ -43,7 +43,7 @@ class LocationController extends Controller
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'slug' => 'required|string|max:255|unique:locations,slug,' . $location->id,
+            'slug' => 'required|string|max:255|unique:locations,slug,'.$location->id,
             'address' => 'nullable|string',
             'is_active' => 'boolean',
         ]);
@@ -57,7 +57,7 @@ class LocationController extends Controller
     {
         abort_unless(\Gate::allows('toggleActiveLocation'), 403);
 
-        $location->update(['is_active' => !$location->is_active]);
+        $location->update(['is_active' => ! $location->is_active]);
 
         return back()->with('success', 'Location status updated.');
     }

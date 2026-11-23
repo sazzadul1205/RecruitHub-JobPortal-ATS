@@ -11,7 +11,7 @@ class OwnershipCheck
     public function handle(Request $request, Closure $next, string $model, string $userField = 'user_id'): Response
     {
         $user = auth()->user();
-        if (!$user) {
+        if (! $user) {
             abort(403);
         }
 
@@ -20,12 +20,12 @@ class OwnershipCheck
         }
 
         $id = $request->route($model) ?? $request->input('id');
-        if (!$id) {
+        if (! $id) {
             abort(403);
         }
 
-        $record = app("App\Models\\" . ucfirst($model))->find($id);
-        if (!$record) {
+        $record = app("App\Models\\".ucfirst($model))->find($id);
+        if (! $record) {
             abort(404);
         }
 

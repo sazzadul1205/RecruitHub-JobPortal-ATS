@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\ApplicantProfile;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class ApplicantProfileFactory extends Factory
@@ -12,7 +13,7 @@ class ApplicantProfileFactory extends Factory
     public function definition(): array
     {
         return [
-            'user_id' => \App\Models\User::factory(),
+            'user_id' => User::factory(),
             'first_name' => fake()->firstName(),
             'last_name' => fake()->lastName(),
             'birth_date' => fake()->dateBetween('1980-01-01', '2005-01-01'),

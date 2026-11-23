@@ -11,7 +11,7 @@ class ApplicantProfileSeeder extends Seeder
     public function run(): void
     {
         $applicant = User::where('email', 'applicant@example.com')->first();
-        if (!$applicant) {
+        if (! $applicant) {
             $applicant = User::factory()->create(['email' => 'applicant@example.com']);
         }
 

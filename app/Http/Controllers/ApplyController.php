@@ -4,17 +4,16 @@ namespace App\Http\Controllers;
 
 use App\Enums\ApplicationStatus;
 use App\Enums\ATSCalculationStatus;
-use App\Models\Application;
 use App\Models\ApplicantCv;
 use App\Models\ApplicantProfile;
+use App\Models\Application;
 use App\Models\JobListing;
-use App\Models\StatusTimeline;
 use App\Services\ATSService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
-use Illuminate\Support\Facades\Storage;
 
 class ApplyController extends Controller
 {
@@ -35,7 +34,7 @@ class ApplyController extends Controller
         $job = JobListing::where('slug', $slug)->active()->published()->firstOrFail();
         $profile = ApplicantProfile::where('user_id', auth()->id())->first();
 
-        if (!$profile) {
+        if (! $profile) {
             return redirect()->route('profile.edit')->with('error', 'Please complete your profile before applying.');
         }
 
@@ -81,7 +80,7 @@ class ApplyController extends Controller
         // Copy the CV to applications folder (snapshot at apply time)
         $resumePath = null;
         if ($cv && Storage::disk('private')->exists($cv->cv_path)) {
-            $resumePath = 'applications/' . auth()->id() . '_' . $job->id . '_' . basename($cv->cv_path);
+            $resumePath = 'applications/'.auth()->id().'_'.$job->id.'_'.basename($cv->cv_path);
             Storage::disk('private')->copy($cv->cv_path, $resumePath);
         }
 
@@ -173,7 +172,7 @@ class ApplyController extends Controller
         $resumePath = $application->resume_path;
 
         if ($cv && Storage::disk('private')->exists($cv->cv_path)) {
-            $resumePath = 'applications/' . auth()->id() . '_' . $application->job_listing_id . '_' . basename($cv->cv_path);
+            $resumePath = 'applications/'.auth()->id().'_'.$application->job_listing_id.'_'.basename($cv->cv_path);
             Storage::disk('private')->copy($cv->cv_path, $resumePath);
         }
 

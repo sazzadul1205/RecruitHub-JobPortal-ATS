@@ -2,8 +2,8 @@
 
 namespace Database\Factories;
 
-use App\Models\EducationHistory;
 use App\Models\ApplicantProfile;
+use App\Models\EducationHistory;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class EducationHistoryFactory extends Factory

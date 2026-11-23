@@ -11,7 +11,7 @@ class JobListingSeeder extends Seeder
     public function run(): void
     {
         $employer = User::where('email', 'employer@example.com')->first();
-        if (!$employer) {
+        if (! $employer) {
             $employer = User::factory()->create(['email' => 'employer@example.com']);
         }
 

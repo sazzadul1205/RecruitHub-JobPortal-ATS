@@ -11,7 +11,7 @@ class ApplicantCvSeeder extends Seeder
     public function run(): void
     {
         $profile = ApplicantProfile::first();
-        if (!$profile) {
+        if (! $profile) {
             return;
         }
 

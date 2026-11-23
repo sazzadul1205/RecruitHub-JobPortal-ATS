@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\JobCategory;
 use App\Models\JobListing;
+use App\Models\JobView;
 use App\Models\Location;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -67,12 +68,12 @@ class PublicJobListingController extends Controller
 
     public function show(JobListing $jobListing): Response
     {
-        if (!$jobListing->is_active || !$jobListing->isPublished()) {
+        if (! $jobListing->is_active || ! $jobListing->isPublished()) {
             abort(404);
         }
 
         $ip = request()->ip();
-        \App\Models\JobView::updateOrCreate(
+        JobView::updateOrCreate(
             ['job_listing_id' => $jobListing->id, 'ip_address' => $ip],
             ['job_listing_id' => $jobListing->id, 'ip_address' => $ip]
         );

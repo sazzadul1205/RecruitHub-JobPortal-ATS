@@ -10,7 +10,7 @@ class CheckRole
 {
     public function handle(Request $request, Closure $next, string $role): Response
     {
-        if (!auth()->check() || !auth()->user()->hasRole($role)) {
+        if (! auth()->check() || ! auth()->user()->hasRole($role)) {
             if ($request->expectsJson()) {
                 return response()->json(['message' => 'Forbidden'], 403);
             }

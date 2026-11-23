@@ -14,7 +14,7 @@ class AchievementFactory extends Factory
     {
         return [
             'applicant_profile_id' => ApplicantProfile::factory(),
-            'achievement_name' => fake()->word() . ' Achievement',
+            'achievement_name' => fake()->word().' Achievement',
             'achievement_details' => fake()->sentence(),
         ];
     }

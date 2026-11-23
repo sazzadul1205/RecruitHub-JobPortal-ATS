@@ -10,7 +10,7 @@ class CheckPermission
 {
     public function handle(Request $request, Closure $next, string $permission): Response
     {
-        if (!auth()->check() || !auth()->user()->hasPermission($permission)) {
+        if (! auth()->check() || ! auth()->user()->hasPermission($permission)) {
             if ($request->expectsJson()) {
                 return response()->json(['message' => 'Forbidden'], 403);
             }

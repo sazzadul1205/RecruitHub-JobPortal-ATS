@@ -71,7 +71,7 @@ class RoleAndPermissionSeeder extends Seeder
         }
 
         foreach ($employerPermissions as $perm) {
-            if (!Permission::where('name', $perm)->exists()) {
+            if (! Permission::where('name', $perm)->exists()) {
                 Permission::create([
                     'name' => $perm,
                     'guard_name' => 'web',

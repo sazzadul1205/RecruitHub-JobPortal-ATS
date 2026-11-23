@@ -82,10 +82,11 @@ class ApplicantProfile extends Model
         $fields = ['first_name', 'last_name', 'phone'];
         $filled = 0;
         foreach ($fields as $field) {
-            if (!empty($this->{$field})) {
+            if (! empty($this->{$field})) {
                 $filled++;
             }
         }
+
         return (int) round(($filled / count($fields)) * 100);
     }
 }

@@ -3,15 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Enums\ApplicationStatus;
-use App\Enums\ATSCalculationStatus;
 use App\Models\Application;
 use App\Models\JobListing;
 use App\Models\StatusTimeline;
+use App\Services\ATSService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
-use Illuminate\Support\Facades\Mail;
 
 class ApplicationsController extends Controller
 {
@@ -145,7 +144,7 @@ class ApplicationsController extends Controller
     {
         abort_unless(\Gate::allows('downloadResume'), 403);
 
-        if (!$application->resume_path || !\Storage::disk('private')->exists($application->resume_path)) {
+        if (! $application->resume_path || ! \Storage::disk('private')->exists($application->resume_path)) {
             abort(404);
         }
 
@@ -160,8 +159,8 @@ class ApplicationsController extends Controller
 
         $applications = Application::whereIn('id', $request->ids)->whereNotNull('resume_path')->get();
 
-        $zipName = 'resumes_' . now()->format('Ymd_His') . '.zip';
-        $zipPath = 'temp/' . $zipName;
+        $zipName = 'resumes_'.now()->format('Ymd_His').'.zip';
+        $zipPath = 'temp/'.$zipName;
 
         $zip = new \ZipArchive;
         if ($zip->open(\Storage::disk('private')->path($zipPath), \ZipArchive::CREATE) === true) {
@@ -223,7 +222,7 @@ class ApplicationsController extends Controller
     {
         abort_unless(\Gate::allows('recalculateAts'), 403);
 
-        $app = app(\App\Services\ATSService::class);
+        $app = app(ATSService::class);
         $app->calculate($application);
 
         return back()->with('success', 'ATS score recalculated.');

@@ -2,8 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\ApplicationStatus;
-use App\Enums\ATSCalculationStatus;
+use App\Enums\EducationRequirement;
 use App\Enums\ExperienceLevel;
 use App\Enums\JobType;
 use App\Models\Application;
@@ -71,7 +70,7 @@ class JobListingController extends Controller
             'locations' => Location::active()->get(),
             'jobTypes' => JobType::cases(),
             'experienceLevels' => ExperienceLevel::cases(),
-            'educationRequirements' => \App\Enums\EducationRequirement::cases(),
+            'educationRequirements' => EducationRequirement::cases(),
         ]);
     }
 
@@ -132,7 +131,7 @@ class JobListingController extends Controller
             'locations' => Location::active()->get(),
             'jobTypes' => JobType::cases(),
             'experienceLevels' => ExperienceLevel::cases(),
-            'educationRequirements' => \App\Enums\EducationRequirement::cases(),
+            'educationRequirements' => EducationRequirement::cases(),
         ]);
     }
 
@@ -143,7 +142,7 @@ class JobListingController extends Controller
         $validated = $request->validate([
             'category_id' => 'nullable|exists:job_categories,id',
             'title' => 'required|string|max:255',
-            'slug' => 'required|string|max:255|unique:job_listings,slug,' . $jobListing->id,
+            'slug' => 'required|string|max:255|unique:job_listings,slug,'.$jobListing->id,
             'description' => 'required|string',
             'requirements' => 'required|string',
             'job_type' => 'required|string',
@@ -183,7 +182,7 @@ class JobListingController extends Controller
     {
         abort_unless(\Gate::allows('toggleActiveJobListing'), 403);
 
-        $jobListing->update(['is_active' => !$jobListing->is_active]);
+        $jobListing->update(['is_active' => ! $jobListing->is_active]);
 
         return back()->with('success', 'Job listing status updated.');
     }

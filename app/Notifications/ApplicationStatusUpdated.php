@@ -16,8 +16,7 @@ class ApplicationStatusUpdated extends Notification implements ShouldQueue
         public Application $application,
         public string $oldStatus,
         public string $newStatus
-    ) {
-    }
+    ) {}
 
     public function via(object $notifiable): array
     {
@@ -42,7 +41,7 @@ class ApplicationStatusUpdated extends Notification implements ShouldQueue
             ->line("Your application for {$this->application->jobListing->title} has been updated.")
             ->line("Previous status: {$this->oldStatus}")
             ->line("New status: {$this->newStatus}")
-            ->action('View Application', url('/apply/' . $this->application->id))
+            ->action('View Application', url('/apply/'.$this->application->id))
             ->line('Thank you for using our application!');
     }
 }

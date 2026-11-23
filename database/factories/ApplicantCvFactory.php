@@ -14,8 +14,8 @@ class ApplicantCvFactory extends Factory
     {
         return [
             'applicant_profile_id' => ApplicantProfile::factory(),
-            'cv_path' => 'cvs/' . fake()->uuid() . '.pdf',
-            'original_name' => fake()->word() . '_resume.pdf',
+            'cv_path' => 'cvs/'.fake()->uuid().'.pdf',
+            'original_name' => fake()->word().'_resume.pdf',
             'status' => 'active',
             'order_position' => 1,
             'is_primary' => true,

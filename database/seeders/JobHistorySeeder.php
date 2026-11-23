@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
-use App\Models\JobHistory;
 use App\Models\ApplicantProfile;
+use App\Models\JobHistory;
 use Illuminate\Database\Seeder;
 
 class JobHistorySeeder extends Seeder
@@ -11,7 +11,7 @@ class JobHistorySeeder extends Seeder
     public function run(): void
     {
         $profile = ApplicantProfile::first();
-        if (!$profile) {
+        if (! $profile) {
             return;
         }
 

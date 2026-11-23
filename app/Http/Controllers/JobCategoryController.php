@@ -42,7 +42,7 @@ class JobCategoryController extends Controller
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'slug' => 'required|string|max:255|unique:job_categories,slug,' . $category->id,
+            'slug' => 'required|string|max:255|unique:job_categories,slug,'.$category->id,
             'is_active' => 'boolean',
         ]);
 
@@ -55,7 +55,7 @@ class JobCategoryController extends Controller
     {
         abort_unless(\Gate::allows('toggleActiveJobCategory'), 403);
 
-        $category->update(['is_active' => !$category->is_active]);
+        $category->update(['is_active' => ! $category->is_active]);
 
         return back()->with('success', 'Category status updated.');
     }

@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
-use App\Models\EducationHistory;
 use App\Models\ApplicantProfile;
+use App\Models\EducationHistory;
 use Illuminate\Database\Seeder;
 
 class EducationHistorySeeder extends Seeder
@@ -11,7 +11,7 @@ class EducationHistorySeeder extends Seeder
     public function run(): void
     {
         $profile = ApplicantProfile::first();
-        if (!$profile) {
+        if (! $profile) {
             return;
         }
 

@@ -27,6 +27,7 @@ class ATSService
                     'ats_score' => $this->emptyScore(0, 0),
                     'ats_percentage' => 0,
                 ]);
+
                 return;
             }
 
@@ -49,6 +50,7 @@ class ATSService
                     ],
                     'ats_percentage' => 0,
                 ]);
+
                 return;
             }
 
@@ -115,7 +117,7 @@ class ATSService
     {
         $resumePath = $application->resume_path;
 
-        if (!$resumePath || !\Storage::disk('private')->exists($resumePath)) {
+        if (! $resumePath || ! \Storage::disk('private')->exists($resumePath)) {
             return '';
         }
 
@@ -133,13 +135,15 @@ class ATSService
     private function extractPdfText(string $path): string
     {
         try {
-            $parser = new PdfParser();
+            $parser = new PdfParser;
             $document = $parser->parseFile($path);
+
             return $document->getText() ?? '';
         } catch (\Throwable $e) {
             \Log::warning('PDF parser failed, trying pdftotext', ['path' => $path, 'error' => $e->getMessage()]);
 
-            $output = shell_exec("pdftotext '" . escapeshellarg($path) . "' - 2>/dev/null");
+            $output = shell_exec("pdftotext '".escapeshellarg($path)."' - 2>/dev/null");
+
             return $output ?? '';
         }
     }
@@ -154,6 +158,7 @@ class ATSService
 
                 if ($xml) {
                     $text = strip_tags($xml);
+
                     return mb_convert_encoding($text, 'UTF-8', 'UTF-8');
                 }
             }
@@ -167,7 +172,7 @@ class ATSService
     private function extractDocText(string $path): string
     {
         try {
-            $output = shell_exec("antiword '" . escapeshellarg($path) . "' 2>/dev/null");
+            $output = shell_exec("antiword '".escapeshellarg($path)."' 2>/dev/null");
             if ($output) {
                 return $output;
             }
@@ -190,7 +195,8 @@ class ATSService
             return mb_strpos($lowerText, $keyword) !== false;
         }
 
-        $pattern = '/(?<![\p{L}\p{N}])' . preg_quote($keyword, '/') . '(?![\p{L}\p{N}])/u';
+        $pattern = '/(?<![\p{L}\p{N}])'.preg_quote($keyword, '/').'(?![\p{L}\p{N}])/u';
+
         return (bool) preg_match($pattern, $lowerText);
     }
 
@@ -208,8 +214,8 @@ class ATSService
     {
         $suggestions = [];
 
-        if (!empty($missing)) {
-            $suggestions[] = 'Highlight these keywords: ' . implode(', ', array_slice($missing, 0, 5));
+        if (! empty($missing)) {
+            $suggestions[] = 'Highlight these keywords: '.implode(', ', array_slice($missing, 0, 5));
             $suggestions[] = 'Consider adding a skills section to your resume';
         }
 

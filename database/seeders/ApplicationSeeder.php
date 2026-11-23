@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
-use App\Models\Application;
 use App\Models\ApplicantProfile;
+use App\Models\Application;
 use App\Models\JobListing;
 use App\Models\User;
 use Illuminate\Database\Seeder;
@@ -16,7 +16,7 @@ class ApplicationSeeder extends Seeder
         $profile = ApplicantProfile::first();
         $job = JobListing::first();
 
-        if (!$applicant || !$profile || !$job) {
+        if (! $applicant || ! $profile || ! $job) {
             return;
         }
 
