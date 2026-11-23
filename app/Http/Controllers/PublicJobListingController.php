@@ -45,7 +45,7 @@ class PublicJobListingController extends Controller
         }
 
         $sort = $request->get('sort', 'latest');
-        $query->match($sort, [
+        $sortCallbacks = [
             'latest' => fn ($q) => $q->latest('publish_at'),
             'oldest' => fn ($q) => $q->oldest('publish_at'),
             'deadline_soon' => fn ($q) => $q->orderBy('application_deadline', 'asc'),
@@ -54,7 +54,9 @@ class PublicJobListingController extends Controller
             'salary_low' => fn ($q) => $q->orderBy('salary_min', 'asc'),
             'popular' => fn ($q) => $q->orderBy('views_count', 'desc'),
             'most_applied' => fn ($q) => $q->withCount('applications')->orderBy('applications_count', 'desc'),
-        ][$sort] ?? fn ($q) => $q->latest());
+        ];
+        $callback = $sortCallbacks[$sort] ?? fn ($q) => $q->latest();
+        $callback($query);
 
         $jobs = $query->paginate(12)->withQueryString();
 
@@ -66,8 +68,10 @@ class PublicJobListingController extends Controller
         ]);
     }
 
-    public function show(JobListing $jobListing): Response
+    public function show(string $slug): Response
     {
+        $jobListing = JobListing::where('slug', $slug)->firstOrFail();
+
         if (! $jobListing->is_active || ! $jobListing->isPublished()) {
             abort(404);
         }

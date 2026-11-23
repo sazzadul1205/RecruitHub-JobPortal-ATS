@@ -55,12 +55,12 @@ class User extends Authenticatable
         return $this->belongsToMany(Role::class, 'user_has_roles');
     }
 
-    public function permissions(): BelongsToMany
+    public function permissions()
     {
-        return $this->belongsToMany(Permission::class, 'user_has_roles')
-            ->join('role_has_permissions', 'role_has_permissions.role_id', '=', 'user_has_roles.role_id')
-            ->join('permissions', 'permissions.id', '=', 'role_has_permissions.permission_id')
-            ->select('permissions.*');
+        return Permission::join('role_has_permissions', 'permissions.id', '=', 'role_has_permissions.permission_id')
+            ->join('user_has_roles', 'role_has_permissions.role_id', '=', 'user_has_roles.role_id')
+            ->where('user_has_roles.user_id', $this->id)
+            ->get();
     }
 
     public function applicantProfile(): BelongsTo
@@ -85,7 +85,7 @@ class User extends Authenticatable
 
     public function hasPermission(string $permission): bool
     {
-        return $this->permissions->contains('name', $permission);
+        return $this->roles()->whereHas('permissions', fn ($q) => $q->where('name', $permission))->exists();
     }
 
     public function isAdmin(): bool

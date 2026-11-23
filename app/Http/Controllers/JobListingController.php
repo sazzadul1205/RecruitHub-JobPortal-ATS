@@ -17,7 +17,7 @@ use Inertia\Response;
 
 class JobListingController extends Controller
 {
-    public function adminIndex(Request $request): Response
+public function adminIndex(Request $request): Response
     {
         abort_unless(\Gate::allows('viewAnyJobListing'), 403);
 
