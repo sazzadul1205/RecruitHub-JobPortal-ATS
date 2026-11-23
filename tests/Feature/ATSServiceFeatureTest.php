@@ -16,7 +16,7 @@ test('ATS service returns 0 score when job has no keywords', function () {
         'ats_calculation_status' => ATSCalculationStatus::Pending->value,
     ]);
 
-    $service = new ATSService();
+    $service = new ATSService;
     $service->calculate($application);
 
     $application->refresh();
@@ -40,7 +40,7 @@ test('ATS service calculates matching score based on keywords', function () {
     Storage::fake('private');
     Storage::disk('private')->put('resumes/test.txt', 'I am a PHP developer with Laravel and MySQL experience.');
 
-    $service = new ATSService();
+    $service = new ATSService;
     $service->calculate($application);
 
     $application->refresh();
@@ -65,7 +65,7 @@ test('ATS service calculates partial match score', function () {
     Storage::fake('private');
     Storage::disk('private')->put('resumes/test.txt', 'I am a PHP developer.');
 
-    $service = new ATSService();
+    $service = new ATSService;
     $service->calculate($application);
 
     $application->refresh();
@@ -85,7 +85,7 @@ test('ATS service marks as failed when resume file does not exist', function () 
         'ats_calculation_status' => ATSCalculationStatus::Pending->value,
     ]);
 
-    $service = new ATSService();
+    $service = new ATSService;
     $service->calculate($application);
 
     $application->refresh();

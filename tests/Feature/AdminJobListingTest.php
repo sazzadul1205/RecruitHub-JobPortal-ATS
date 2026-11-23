@@ -68,10 +68,10 @@ test('employer can update their own job listing', function () {
 
     $job = JobListing::factory()->create(['user_id' => $user->id, 'title' => 'Old Title']);
 
-    $response = $this->actingAs($user)->put('/backend/listing/' . $job->id, [
+    $response = $this->actingAs($user)->put('/backend/listing/'.$job->id, [
         'category_id' => $job->category_id,
         'title' => 'Updated Title',
-        'slug' => 'updated-title-' . $job->id,
+        'slug' => 'updated-title-'.$job->id,
         'description' => 'Updated description.',
         'requirements' => 'Updated requirements.',
         'job_type' => 'full_time',
@@ -98,10 +98,10 @@ test('employer cannot update another user job listing', function () {
 
     $job = JobListing::factory()->create(['user_id' => $otherUser->id]);
 
-    $response = $this->actingAs($user)->put('/backend/listing/' . $job->id, [
+    $response = $this->actingAs($user)->put('/backend/listing/'.$job->id, [
         'category_id' => $job->category_id,
         'title' => 'Hacked Title',
-        'slug' => 'hacked-title-' . $job->id,
+        'slug' => 'hacked-title-'.$job->id,
         'description' => 'Hacked description.',
         'requirements' => 'Hacked requirements.',
         'job_type' => 'full_time',
@@ -123,7 +123,7 @@ test('employer can delete their own job listing', function () {
 
     $job = JobListing::factory()->create(['user_id' => $user->id]);
 
-    $response = $this->actingAs($user)->delete('/backend/listing/' . $job->id);
+    $response = $this->actingAs($user)->delete('/backend/listing/'.$job->id);
 
     $response->assertRedirect('/backend/listing');
     $this->assertSoftDeleted('job_listings', ['id' => $job->id]);

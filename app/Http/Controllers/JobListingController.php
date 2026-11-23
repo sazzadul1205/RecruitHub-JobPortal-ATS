@@ -17,7 +17,7 @@ use Inertia\Response;
 
 class JobListingController extends Controller
 {
-public function adminIndex(Request $request): Response
+    public function adminIndex(Request $request): Response
     {
         $query = JobListing::with(['employer', 'category', 'locations']);
 
@@ -167,6 +167,7 @@ public function adminIndex(Request $request): Response
 
     public function adminDestroy(JobListing $jobListing): RedirectResponse
     {
+        abort_unless(auth()->user()->isAdmin() || $jobListing->user_id === auth()->id(), 403);
 
         $jobListing->delete();
 
@@ -183,6 +184,7 @@ public function adminIndex(Request $request): Response
 
     public function restore(JobListing $jobListing): RedirectResponse
     {
+        abort_unless(auth()->user()->isAdmin() || $jobListing->user_id === auth()->id(), 403);
 
         $jobListing->restore();
 
@@ -191,6 +193,7 @@ public function adminIndex(Request $request): Response
 
     public function forceDelete(JobListing $jobListing): RedirectResponse
     {
+        abort_unless(auth()->user()->isAdmin() || $jobListing->user_id === auth()->id(), 403);
 
         $jobListing->forceDelete();
 

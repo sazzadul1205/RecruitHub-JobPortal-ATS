@@ -28,7 +28,7 @@ test('public job listing filters by category', function () {
     JobListing::factory()->count(3)->create(['category_id' => $category->id, 'is_active' => true]);
     JobListing::factory()->count(2)->create(['is_active' => true]);
 
-    $response = $this->actingAs($user)->get('/jobs?category=' . $category->id);
+    $response = $this->actingAs($user)->get('/jobs?category='.$category->id);
 
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page->component('jobs/public-index'));
