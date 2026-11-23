@@ -38,7 +38,8 @@ const SidebarProvider = React.forwardRef(({ defaultOpen = true, open: openProp, 
     const open = openProp ?? _open;
     const setOpen = React.useCallback(
         (value) => {
-            const openState = typeof value === 'function' ? value(open) {
+            const openState = typeof value === 'function' ? value(open) : value;
+            if (setOpenProp) {
                 setOpenProp(openState);
             } else {
                 _setOpen(openState);
@@ -50,7 +51,12 @@ const SidebarProvider = React.forwardRef(({ defaultOpen = true, open: openProp, 
     );
 
     const toggleSidebar = React.useCallback(() => {
-        return isMobile ? setOpenMobile((open) => !open) {
+        return isMobile ? setOpenMobile((open) => !open) : setOpen((open) => !open);
+    }, [isMobile, setOpen, setOpenMobile]);
+
+    React.useEffect(() => {
+        const handleMobileNavigation = () => {
+            if (isMobile) {
                 setOpenMobile(false);
             }
         };
