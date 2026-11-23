@@ -15,7 +15,7 @@ export default function DeleteUser() {
     const passwordInput = useRef<HTMLInputElement>(null);
     const { data, setData, delete: destroy, processing, reset, errors, clearErrors } = useForm({ password: '' });
 
-    const deleteUser: FormEventHandler = (e) => {
+    const deleteUser = (e) => {
         e.preventDefault();
 
         destroy(route('profile.destroy'), {

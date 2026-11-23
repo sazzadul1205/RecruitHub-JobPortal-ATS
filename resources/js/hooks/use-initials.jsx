@@ -1,5 +1,5 @@
 export function useInitials() {
-    const getInitials = (fullName: string): string => {
+    const getInitials = (fullName: string) => {
         const names = fullName.trim().split(' ');
 
         if (names.length === 0) return '';
