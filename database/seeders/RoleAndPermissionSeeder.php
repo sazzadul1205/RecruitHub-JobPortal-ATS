@@ -11,21 +11,24 @@ class RoleAndPermissionSeeder extends Seeder
 {
     public function run(): void
     {
-        $adminRole = Role::create([
+        $adminRole = Role::firstOrCreate([
             'name' => 'admin',
             'guard_name' => 'web',
+        ], [
             'description' => 'Platform administrator with full access',
         ]);
 
-        $employerRole = Role::create([
+        $employerRole = Role::firstOrCreate([
             'name' => 'employer',
             'guard_name' => 'web',
+        ], [
             'description' => 'Posts jobs and screens applicants',
         ]);
 
-        $applicantRole = Role::create([
+        $applicantRole = Role::firstOrCreate([
             'name' => 'applicant',
             'guard_name' => 'web',
+        ], [
             'description' => 'Job seeker who manages own profile and applications',
         ]);
 
@@ -63,47 +66,53 @@ class RoleAndPermissionSeeder extends Seeder
         $applicantPermissions = [];
 
         foreach ($adminPermissions as $perm) {
-            Permission::create([
+            Permission::firstOrCreate([
                 'name' => $perm,
                 'guard_name' => 'web',
+            ], [
                 'description' => "Permission for {$perm}",
             ]);
         }
 
         foreach ($employerPermissions as $perm) {
-            if (! Permission::where('name', $perm)->exists()) {
-                Permission::create([
-                    'name' => $perm,
-                    'guard_name' => 'web',
-                    'description' => "Permission for {$perm}",
-                ]);
-            }
+            Permission::firstOrCreate([
+                'name' => $perm,
+                'guard_name' => 'web',
+            ], [
+                'description' => "Permission for {$perm}",
+            ]);
         }
 
-        $adminRole->permissions()->attach(Permission::all()->pluck('id'));
+        $adminRole->permissions()->syncWithoutDetaching(Permission::all()->pluck('id'));
 
         $employerPermissionIds = Permission::whereIn('name', $employerPermissions)->pluck('id');
-        $employerRole->permissions()->attach($employerPermissionIds);
+        $employerRole->permissions()->syncWithoutDetaching($employerPermissionIds);
 
-        $adminUser = User::create([
-            'name' => 'Admin User',
-            'email' => 'admin@example.com',
-            'password' => bcrypt('password'),
-        ]);
-        $adminUser->roles()->attach($adminRole);
+        $adminUser = User::firstOrCreate(
+            ['email' => 'admin@example.com'],
+            [
+                'name' => 'Admin User',
+                'password' => bcrypt('password'),
+            ]
+        );
+        $adminUser->roles()->sync([$adminRole->id]);
 
-        $employerUser = User::create([
-            'name' => 'Employer User',
-            'email' => 'employer@example.com',
-            'password' => bcrypt('password'),
-        ]);
-        $employerUser->roles()->attach($employerRole);
+        $employerUser = User::firstOrCreate(
+            ['email' => 'employer@example.com'],
+            [
+                'name' => 'Employer User',
+                'password' => bcrypt('password'),
+            ]
+        );
+        $employerUser->roles()->sync([$employerRole->id]);
 
-        $applicantUser = User::create([
-            'name' => 'Applicant User',
-            'email' => 'applicant@example.com',
-            'password' => bcrypt('password'),
-        ]);
-        $applicantUser->roles()->attach($applicantRole);
+        $applicantUser = User::firstOrCreate(
+            ['email' => 'applicant@example.com'],
+            [
+                'name' => 'Applicant User',
+                'password' => bcrypt('password'),
+            ]
+        );
+        $applicantUser->roles()->sync([$applicantRole->id]);
     }
 }
