@@ -1,6 +1,6 @@
 'use client';
 
-import *@radix-ui/react-dialog';
+import * as SheetPrimitive from '@radix-ui/react-dialog';
 import { cva, VariantProps } from 'class-variance-authority';
 import { X } from 'lucide-react';
 import * as React from 'react';
@@ -15,7 +15,7 @@ const SheetClose = SheetPrimitive.Close;
 
 const SheetPortal = SheetPrimitive.Portal;
 
-const SheetOverlay = React.forwardRef, React.ComponentPropsWithoutRef<typeof SheetPrimitive.Overlay>>(
+const SheetOverlay = React.forwardRef(
     ({ className, ...props }, ref) => (
         <SheetPrimitive.Overlay
             className={cn(
@@ -46,7 +46,7 @@ const sheetVariants = cva(
     },
 );
 
-const SheetContent = React.forwardRef, SheetContentProps>(
+const SheetContent = React.forwardRef(
     ({ side = 'right', className, children, ...props }, ref) => (
         <SheetPortal>
             <SheetOverlay />
@@ -72,16 +72,14 @@ const SheetFooter = ({ className, ...props }: React.HTMLAttributes<HTMLDivElemen
 );
 SheetFooter.displayName = 'SheetFooter';
 
-const SheetTitle = React.forwardRef, React.ComponentPropsWithoutRef<typeof SheetPrimitive.Title>>(
+const SheetTitle = React.forwardRef(
     ({ className, ...props }, ref) => (
         <SheetPrimitive.Title ref={ref} className={cn('text-lg font-semibold text-foreground', className)} {...props} />
     ),
 );
 SheetTitle.displayName = SheetPrimitive.Title.displayName;
 
-const SheetDescription = React.forwardRef,
-    React.ComponentPropsWithoutRef<typeof SheetPrimitive.Description>
->(({ className, ...props }, ref) => <SheetPrimitive.Description ref={ref} className={cn('text-sm text-muted-foreground', className)} {...props} />);
+const SheetDescription = React.forwardRef(({ className, ...props }, ref) => <SheetPrimitive.Description ref={ref} className={cn('text-sm text-muted-foreground', className)} {...props} />);
 SheetDescription.displayName = SheetPrimitive.Description.displayName;
 
 export { Sheet, SheetClose, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetOverlay, SheetPortal, SheetTitle, SheetTrigger };

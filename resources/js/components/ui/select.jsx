@@ -1,4 +1,4 @@
-import *@radix-ui/react-select';
+import * as SelectPrimitive from '@radix-ui/react-select';
 import { Check, ChevronDown, ChevronUp } from 'lucide-react';
 import * as React from 'react';
 
@@ -10,9 +10,7 @@ const SelectGroup = SelectPrimitive.Group;
 
 const SelectValue = SelectPrimitive.Value;
 
-const SelectTrigger = React.forwardRef,
-    React.ComponentPropsWithoutRef<typeof SelectPrimitive.Trigger>
->(({ className, children, ...props }, ref) => (
+const SelectTrigger = React.forwardRef(({ className, children, ...props }, ref) => (
     <SelectPrimitive.Trigger
         ref={ref}
         className={cn(
@@ -29,27 +27,21 @@ const SelectTrigger = React.forwardRef,
 ));
 SelectTrigger.displayName = SelectPrimitive.Trigger.displayName;
 
-const SelectScrollUpButton = React.forwardRef,
-    React.ComponentPropsWithoutRef<typeof SelectPrimitive.ScrollUpButton>
->(({ className, ...props }, ref) => (
+const SelectScrollUpButton = React.forwardRef(({ className, ...props }, ref) => (
     <SelectPrimitive.ScrollUpButton ref={ref} className={cn('flex cursor-default items-center justify-center py-1', className)} {...props}>
         <ChevronUp className="h-4 w-4" />
     </SelectPrimitive.ScrollUpButton>
 ));
 SelectScrollUpButton.displayName = SelectPrimitive.ScrollUpButton.displayName;
 
-const SelectScrollDownButton = React.forwardRef,
-    React.ComponentPropsWithoutRef<typeof SelectPrimitive.ScrollDownButton>
->(({ className, ...props }, ref) => (
+const SelectScrollDownButton = React.forwardRef(({ className, ...props }, ref) => (
     <SelectPrimitive.ScrollDownButton ref={ref} className={cn('flex cursor-default items-center justify-center py-1', className)} {...props}>
         <ChevronDown className="h-4 w-4" />
     </SelectPrimitive.ScrollDownButton>
 ));
 SelectScrollDownButton.displayName = SelectPrimitive.ScrollDownButton.displayName;
 
-const SelectContent = React.forwardRef,
-    React.ComponentPropsWithoutRef<typeof SelectPrimitive.Content>
->(({ className, children, position = 'popper', ...props }, ref) => (
+const SelectContent = React.forwardRef(({ className, children, position = 'popper', ...props }, ref) => (
     <SelectPrimitive.Portal>
         <SelectPrimitive.Content
             ref={ref}
@@ -77,14 +69,14 @@ const SelectContent = React.forwardRef,
 ));
 SelectContent.displayName = SelectPrimitive.Content.displayName;
 
-const SelectLabel = React.forwardRef, React.ComponentPropsWithoutRef<typeof SelectPrimitive.Label>>(
+const SelectLabel = React.forwardRef(
     ({ className, ...props }, ref) => (
         <SelectPrimitive.Label ref={ref} className={cn('py-1.5 pl-8 pr-2 text-sm font-semibold', className)} {...props} />
     ),
 );
 SelectLabel.displayName = SelectPrimitive.Label.displayName;
 
-const SelectItem = React.forwardRef, React.ComponentPropsWithoutRef<typeof SelectPrimitive.Item>>(
+const SelectItem = React.forwardRef(
     ({ className, children, ...props }, ref) => (
         <SelectPrimitive.Item
             ref={ref}
@@ -106,9 +98,7 @@ const SelectItem = React.forwardRef, React.ComponentPropsWithoutRef<typeof Selec
 );
 SelectItem.displayName = SelectPrimitive.Item.displayName;
 
-const SelectSeparator = React.forwardRef,
-    React.ComponentPropsWithoutRef<typeof SelectPrimitive.Separator>
->(({ className, ...props }, ref) => <SelectPrimitive.Separator ref={ref} className={cn('-mx-1 my-1 h-px bg-muted', className)} {...props} />);
+const SelectSeparator = React.forwardRef(({ className, ...props }, ref) => <SelectPrimitive.Separator ref={ref} className={cn('-mx-1 my-1 h-px bg-muted', className)} {...props} />);
 SelectSeparator.displayName = SelectPrimitive.Separator.displayName;
 
 export {
