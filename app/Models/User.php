@@ -33,6 +33,11 @@ class User extends Authenticatable
         'remember_token',
     ];
 
+    public function isAdmin(): bool
+    {
+        return str_ends_with($this->email, '@admin.test');
+    }
+
     /**
      * Get the attributes that should be cast.
      *
