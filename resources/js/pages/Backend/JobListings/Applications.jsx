@@ -1,5 +1,6 @@
-import { Head, Link } from '@inertiajs/react';
-import { ArrowLeft, Briefcase, Mail, Trash2, Edit3 } from 'lucide-react';
+import { Head, Link, router } from '@inertiajs/react';
+
+import { ArrowLeft, Briefcase, Mail } from 'lucide-react';
 
 import AppSidebarLayout from '@/layouts/app-sidebar-layout';
 
@@ -16,7 +17,7 @@ export default function JobListingsApplications({ jobListing, applications, stat
 
     return (
         <AppSidebarLayout>
-            <div className="min-h-screen bg-gray-50 p-6 md:p-8 max-w-7xl mx-auto">
+            <div className="min-h-screen bg-gray-50 p-6 sm:p-8 max-w-7xl mx-auto">
                 <Head title={`Applications - ${jobListing.title}`} />
 
                 <div className="flex justify-between items-center mb-8">

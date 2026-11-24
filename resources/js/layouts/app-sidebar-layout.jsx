@@ -1,31 +1,62 @@
 import { Link, usePage, router } from '@inertiajs/react';
 
-const mainNavItems = [
-    { title: 'Dashboard', url: '/dashboard', icon: '📊' },
-];
+import { useAuth } from '@/hooks/useAuth';
+
+import {
+  LayoutDashboard,
+  Briefcase,
+  Plus,
+  Users,
+  Folder,
+  MapPin,
+  BarChart2,
+  Target,
+  LogOut,
+} from 'lucide-react';
+
+const iconMap = {
+  LayoutDashboard,
+  Briefcase,
+  Plus,
+  Users,
+  Folder,
+  MapPin,
+  BarChart2,
+  Target,
+};
 
 export default function AppSidebarLayout({ children, breadcrumbs = [] }) {
     const { auth } = usePage().props;
     const user = auth?.user;
-    const isAdmin = user?.role?.slug === 'admin';
-    const isEmployer = user?.role?.slug === 'employer';
+
+    const {
+        hasAnyPermission,
+        hasRole,
+    } = useAuth();
+
+    const isAdmin = hasAnyPermission(['dashboard.admin']) || hasRole('admin');
+    const isEmployer = hasRole('employer') || hasAnyPermission(['dashboard.employer']);
+
+    const mainNavItems = [
+        { title: 'Dashboard', url: '/dashboard', icon: 'LayoutDashboard' },
+    ];
 
     const dynamicNavItems = [
         ...(isAdmin || isEmployer
             ? [
-                { title: 'Job Listings', url: '/backend/listing', icon: '💼' },
-                { title: 'Create Job Listing', url: '/backend/listing/create', icon: '📝' },
-                { title: 'Applications', url: '/backend/applications', icon: '👥' },
+                { title: 'Job Listings', url: '/backend/listing', icon: 'Briefcase' },
+                { title: 'Create Job Listing', url: '/backend/listing/create', icon: 'Plus' },
+                { title: 'Applications', url: '/backend/applications', icon: 'Users' },
             ]
             : []),
         ...(isAdmin
             ? [
-                { title: 'Categories', url: '/backend/categories', icon: '🏢' },
-                { title: 'Locations', url: '/backend/locations', icon: '📍' },
-                { title: 'Statistics', url: '/backend/statistics', icon: '📈' },
+                { title: 'Categories', url: '/backend/categories', icon: 'Folder' },
+                { title: 'Locations', url: '/backend/locations', icon: 'MapPin' },
+                { title: 'Statistics', url: '/backend/statistics', icon: 'BarChart2' },
             ]
             : []),
-        { title: 'Browse Jobs', url: '/backend/seeker/jobs', icon: '🎯' },
+        { title: 'Browse Jobs', url: '/backend/seeker/jobs', icon: 'Target' },
     ];
 
     const page = usePage();
@@ -36,15 +67,16 @@ export default function AppSidebarLayout({ children, breadcrumbs = [] }) {
             <aside className="hidden w-64 bg-white border-r border-gray-200 flex-col md:flex z-20">
                 <div className="p-5 border-b border-gray-100">
                     <div className="flex items-center gap-2">
-                    <span className="text-2xl">💼</span>
-                    <span className="font-bold text-xl text-gray-900">RecruitHub</span>
-                </div>
+                        <Briefcase className="text-lg text-blue-600" />
+                        <span className="font-bold text-xl text-gray-900">RecruitHub</span>
+                    </div>
                 </div>
 
                 <nav className="p-4 space-y-1 flex-1 overflow-y-auto">
                     <h3 className="text-xs font-semibold uppercase text-gray-400 mb-3 px-3">Platform</h3>
                     {[...mainNavItems, ...dynamicNavItems].map((item) => {
                         const isActive = currentUrl === item.url;
+                        const Icon = iconMap[item.icon];
                         return (
                             <Link
                                 key={item.title}
@@ -55,7 +87,7 @@ export default function AppSidebarLayout({ children, breadcrumbs = [] }) {
                                         : 'text-gray-700 hover:bg-gray-100 hover:text-blue-600'
                                 }`}
                             >
-                                <span className="text-lg">{item.icon}</span>
+                                <Icon className="w-5 h-5" />
                                 {item.title}
                             </Link>
                         );
@@ -84,6 +116,7 @@ export default function AppSidebarLayout({ children, breadcrumbs = [] }) {
                                     }}
                                     className="block w-full px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg text-left transition-colors"
                                 >
+                                    <LogOut className="w-4 h-4 mr-2" />
                                     Sign out
                                 </button>
                             </div>
@@ -92,7 +125,7 @@ export default function AppSidebarLayout({ children, breadcrumbs = [] }) {
                 </div>
             </aside>
 
-            <div className="flex-1 overflow-y-auto bg-gray-50 p-6 md:p-8">
+            <div className="flex-1 overflow-y-auto bg-gray-50 p-6 sm:p-8">
                 {children}
             </div>
         </div>

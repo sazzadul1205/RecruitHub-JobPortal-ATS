@@ -1,267 +1,1118 @@
-import { Head, Link, useForm } from '@inertiajs/react';
-import { useState } from 'react';
-import { Trash2, Edit3, Eye, CheckCircle2, XCircle, Plus } from 'lucide-react';
+import { useState, useMemo, useEffect } from 'react';
+
+import { Head, router, usePage } from '@inertiajs/react';
+
+import { useAuth } from '@/hooks/useAuth';
+import { Can } from '@/components/Auth/Can';
+
+import {
+  Plus,
+  Trash2,
+  Edit3,
+  Eye,
+  CheckCircle2,
+  Filter,
+  ChevronDown,
+  ChevronUp,
+  Times,
+  CheckDouble,
+  Ban,
+  Users,
+  Search,
+  Briefcase,
+  MapPin,
+  Calendar,
+  ToggleOn,
+  ToggleOff,
+  Shield,
+} from 'lucide-react';
 
 import AppSidebarLayout from '@/layouts/app-sidebar-layout';
 
-export default function JobListingsIndex({ jobListings, activeJobs, inactiveJobs, deletedJobs, totalViews, totalJobs, filters, filterOptions }) {
-    const [showTrashed, setShowTrashed] = useState(false);
-    const [selectedIds, setSelectedIds] = useState([]);
-    const [isDeleting, setIsDeleting] = useState(false);
+export default function JobListingsIndex({
+  jobListings: initialJobListings,
+  filters: initialFilters = {},
+  activeJobs,
+  inactiveJobs,
+  deletedJobs,
+  totalViews,
+  totalJobs,
+}) {
+  const { flash } = usePage().props;
 
-    const statusBadge = (isActive) => (
-        <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium border ${isActive ? 'bg-green-50 text-green-600 border-green-100' : 'bg-gray-50 text-gray-600 border-gray-100'}`}>
-            {isActive ? 'Active' : 'Inactive'}
-        </span>
+  const {
+    user: currentUser,
+    hasAnyPermission,
+    hasRole,
+  } = useAuth();
+
+  const canViewJobs = hasAnyPermission(['jobs.view', 'jobs.manage']);
+  const isEmployer = hasRole('employer') || hasRole('employer-admin');
+  const canEditJobs = hasAnyPermission(['jobs.update', 'jobs.manage']);
+  const canToggleJobs = hasAnyPermission(['jobs.update', 'jobs.manage']);
+  const canDeleteJobs = hasAnyPermission(['jobs.destroy', 'jobs.manage']);
+  const canRestoreJobs = hasAnyPermission(['jobs.restore', 'jobs.manage']);
+  const canBulkDeleteJobs = hasAnyPermission(['jobs.bulk_delete', 'jobs.manage']);
+  const canBulkActivateJobs = hasAnyPermission(['jobs.bulk_activate', 'jobs.manage']);
+  const canBulkDeactivateJobs = hasAnyPermission(['jobs.bulk_deactivate', 'jobs.manage']);
+  const canCreateJobs = hasAnyPermission(['jobs.create', 'jobs.manage']);
+
+  const [deletingId, setDeletingId] = useState(null);
+  const [togglingId, setTogglingId] = useState(null);
+  const [selectedJobs, setSelectedJobs] = useState([]);
+  const [restoringId, setRestoringId] = useState(null);
+  const [showFilters, setShowFilters] = useState(false);
+  const [isBulkProcessing, setIsBulkProcessing] = useState(false);
+
+  const [jobListings, setJobListings] = useState(initialJobListings);
+
+  const [filters, setFilters] = useState({
+    search: initialFilters.search || '',
+    status: initialFilters.status || 'all',
+    jobType: initialFilters.job_type || 'all',
+    experienceLevel: initialFilters.experience_level || 'all',
+    category: initialFilters.category || 'all',
+    location: initialFilters.location || 'all',
+    dateRange: initialFilters.date_range || 'all',
+  });
+
+  const jobListingItems = useMemo(() => {
+    if (Array.isArray(jobListings)) return jobListings;
+    if (jobListings && Array.isArray(jobListings.data)) return jobListings.data;
+    return [];
+  }, [jobListings]);
+
+  const pagination = useMemo(() => {
+    if (jobListings && typeof jobListings === 'object' && 'current_page' in jobListings) {
+      return {
+        currentPage: jobListings.current_page,
+        lastPage: jobListings.last_page,
+        perPage: jobListings.per_page,
+        total: jobListings.total,
+        from: jobListings.from,
+        to: jobListings.to,
+        links: jobListings.links || [],
+      };
+    }
+    return null;
+  }, [jobListings]);
+
+  const uniqueJobTypes = useMemo(() => {
+    const types = new Set();
+    jobListingItems.forEach(job => {
+      if (job.job_type) types.add(job.job_type);
+    });
+    return Array.from(types);
+  }, [jobListingItems]);
+
+  const uniqueExperienceLevels = useMemo(() => {
+    const levels = new Set();
+    jobListingItems.forEach(job => {
+      if (job.experience_level) levels.add(job.experience_level);
+    });
+    return Array.from(levels);
+  }, [jobListingItems]);
+
+  const uniqueCategories = useMemo(() => {
+    const cats = new Set();
+    jobListingItems.forEach(job => {
+      if (job.category?.name) cats.add(job.category.name);
+    });
+    return Array.from(cats);
+  }, [jobListingItems]);
+
+  const uniqueLocations = useMemo(() => {
+    const locs = new Set();
+    jobListingItems.forEach(job => {
+      if (job.locations && Array.isArray(job.locations)) {
+        job.locations.forEach(location => {
+          if (location.name) locs.add(location.name);
+        });
+      }
+    });
+    return Array.from(locs);
+  }, [jobListingItems]);
+
+  const sortedJobListings = useMemo(() => {
+    return [...jobListingItems].sort((a, b) => {
+      const aIsTrashed = a.deleted_at !== null;
+      const bIsTrashed = b.deleted_at !== null;
+
+      if (aIsTrashed && !bIsTrashed) return 1;
+      if (!aIsTrashed && bIsTrashed) return -1;
+
+      if (!aIsTrashed && !bIsTrashed) {
+        if (a.is_active && !b.is_active) return -1;
+        if (!a.is_active && b.is_active) return 1;
+        return new Date(b.created_at) - new Date(a.created_at);
+      }
+
+      if (aIsTrashed && bIsTrashed) {
+        return new Date(b.deleted_at) - new Date(a.deleted_at);
+      }
+
+      return 0;
+    });
+  }, [jobListingItems]);
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      router.get(route('backend.listing.index'), {
+        ...filters,
+        page: 1,
+      }, {
+        preserveState: true,
+        preserveScroll: true,
+        replace: true,
+        onSuccess: (page) => {
+          setJobListings(page.props.jobListings);
+        },
+      });
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
+  }, [filters]);
+
+  useEffect(() => {
+    setJobListings(initialJobListings);
+  }, [initialJobListings]);
+
+  useEffect(() => {
+    if (flash?.success) {
+      alert(flash.success);
+    }
+    if (flash?.error) {
+      alert(flash.error);
+    }
+  }, [flash]);
+
+  if (!canViewJobs && !isEmployer) {
+    return (
+      <AppSidebarLayout>
+        <Head title="Access Denied" />
+        <div className="min-h-screen flex items-center justify-center px-4">
+          <div className="text-center max-w-md">
+            <div className="w-20 h-20 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Shield className="w-10 h-10 text-red-500" />
+            </div>
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Access Denied</h2>
+            <p className="text-gray-500 dark:text-gray-400 mt-2">You don't have permission to view job listings.</p>
+          </div>
+        </div>
+      </AppSidebarLayout>
     );
+  }
 
-    const toggleSelect = (id) => {
-        setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+  const totalCount = totalJobs || 0;
+  const activeCount = activeJobs || 0;
+  const deletedCount = deletedJobs || 0;
+  const totalViewsAll = totalViews || 0;
+  const inactiveCount = inactiveJobs || 0;
+
+  const handlePageChange = (page) => {
+    if (page === pagination?.currentPage) return;
+    if (page < 1 || page > pagination?.lastPage) return;
+
+    router.get(route('backend.listing.index'), {
+      ...filters,
+      page,
+    }, {
+      preserveState: true,
+      preserveScroll: true,
+      replace: true,
+      onSuccess: (page) => {
+        setJobListings(page.props.jobListings);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      },
+    });
+  };
+
+  const handleFilterChange = (key, value) => {
+    setFilters(prev => ({ ...prev, [key]: value }));
+  };
+
+  const resetFilters = () => {
+    setFilters({
+      search: '',
+      status: 'all',
+      jobType: 'all',
+      experienceLevel: 'all',
+      category: 'all',
+      location: 'all',
+      dateRange: 'all',
+    });
+  };
+
+  const hasActiveFilters = () => {
+    return filters.search !== '' ||
+      filters.status !== 'all' ||
+      filters.jobType !== 'all' ||
+      filters.experienceLevel !== 'all' ||
+      filters.category !== 'all' ||
+      filters.location !== 'all' ||
+      filters.dateRange !== 'all';
+  };
+
+  const handleSelectAll = () => {
+    const selectableJobs = sortedJobListings.filter(job => !job.deleted_at && (canEditJobs || (isEmployer && job.employer_id === currentUser?.id)));
+    if (selectedJobs.length === selectableJobs.length) {
+      setSelectedJobs([]);
+    } else {
+      setSelectedJobs(selectableJobs.map(job => job.id));
+    }
+  };
+
+  const handleSelectJob = (jobId) => {
+    setSelectedJobs(prev =>
+      prev.includes(jobId)
+        ? prev.filter(id => id !== jobId)
+        : [...prev, jobId]
+    );
+  };
+
+  const canBulkActivate = canBulkActivateJobs && selectedJobs.length > 0;
+  const canBulkDeactivate = canBulkDeactivateJobs && selectedJobs.length > 0;
+  const canBulkDelete = canBulkDeleteJobs && selectedJobs.length > 0;
+
+  const handleBulkActivate = () => {
+    if (!canBulkActivateJobs) {
+      alert('You do not have permission to bulk activate jobs.');
+      return;
+    }
+
+    if (selectedJobs.length === 0) {
+      alert('Please select at least one job listing.');
+      return;
+    }
+
+    if (!confirm(`Are you sure you want to activate ${selectedJobs.length} job listing(s)?`)) return;
+
+    setIsBulkProcessing(true);
+
+    router.post(route('backend.listing.bulk-activate'), {
+      job_ids: selectedJobs
+    }, {
+      preserveScroll: true,
+      onSuccess: () => {
+        alert(`${selectedJobs.length} job listing(s) have been activated.`);
+        setSelectedJobs([]);
+        setIsBulkProcessing(false);
+        router.reload();
+      },
+      onError: (error) => {
+        alert(error?.message || 'Failed to activate jobs.');
+        setIsBulkProcessing(false);
+      }
+    });
+  };
+
+  const handleBulkDeactivate = () => {
+    if (!canBulkDeactivateJobs) {
+      alert('You do not have permission to bulk deactivate jobs.');
+      return;
+    }
+
+    if (selectedJobs.length === 0) {
+      alert('Please select at least one job listing.');
+      return;
+    }
+
+    if (!confirm(`Are you sure you want to deactivate ${selectedJobs.length} job listing(s)?`)) return;
+
+    setIsBulkProcessing(true);
+
+    router.post(route('backend.listing.bulk-deactivate'), {
+      job_ids: selectedJobs
+    }, {
+      preserveScroll: true,
+      onSuccess: () => {
+        alert(`${selectedJobs.length} job listing(s) have been deactivated.`);
+        setSelectedJobs([]);
+        setIsBulkProcessing(false);
+        router.reload();
+      },
+      onError: (error) => {
+        alert(error?.message || 'Failed to deactivate jobs.');
+        setIsBulkProcessing(false);
+      }
+    });
+  };
+
+  const handleBulkDelete = () => {
+    if (!canBulkDeleteJobs) {
+      alert('You do not have permission to bulk delete jobs.');
+      return;
+    }
+
+    if (selectedJobs.length === 0) {
+      alert('Please select at least one job listing.');
+      return;
+    }
+
+    if (!confirm(`Are you sure you want to delete ${selectedJobs.length} job listing(s)? This will move them to trash.`)) return;
+
+    setIsBulkProcessing(true);
+
+    router.delete(route('backend.listing.bulk-delete'), {
+      data: { job_ids: selectedJobs },
+      preserveScroll: true,
+      onSuccess: () => {
+        alert(`${selectedJobs.length} job listing(s) have been moved to trash.`);
+        setSelectedJobs([]);
+        setIsBulkProcessing(false);
+        router.reload();
+      },
+      onError: (error) => {
+        alert(error?.message || 'Failed to delete jobs.');
+        setIsBulkProcessing(false);
+      }
+    });
+  };
+
+  const handleDelete = (id) => {
+    if (!canDeleteJobs) {
+      alert('You do not have permission to delete jobs.');
+      return;
+    }
+
+    if (!confirm('Are you sure you want to delete this job listing? This will move it to trash.')) return;
+
+    setDeletingId(id);
+
+    router.delete(route('backend.listing.destroy', id), {
+      preserveScroll: true,
+      onSuccess: () => {
+        alert('Job listing has been moved to trash.');
+        router.reload();
+      },
+      onError: (errors) => {
+        alert(errors?.message || 'Failed to delete job listing. Please try again.');
+      },
+      onFinish: () => setDeletingId(null),
+    });
+  };
+
+  const handleRestore = (id) => {
+    if (!canRestoreJobs) {
+      alert('You do not have permission to restore jobs.');
+      return;
+    }
+
+    if (!confirm('Are you sure you want to restore this job listing from trash?')) return;
+
+    setRestoringId(id);
+
+    router.patch(route('backend.listing.restore', id), {}, {
+      preserveScroll: true,
+      onSuccess: () => {
+        alert('Job listing has been restored successfully.');
+        router.reload();
+      },
+      onError: (errors) => {
+        alert(errors?.message || 'Failed to restore job listing. Please try again.');
+      },
+      onFinish: () => setRestoringId(null),
+    });
+  };
+
+  const handleToggle = (job) => {
+    if (!canToggleJobs && !(isEmployer && job.employer_id === currentUser?.id)) {
+      alert('You do not have permission to change job status.');
+      return;
+    }
+
+    if (!confirm(`This will ${job.is_active ? 'deactivate' : 'activate'} this job listing. Continue?`)) return;
+
+    setTogglingId(job.id);
+
+    router.patch(route('backend.listing.toggle-active', job.id), {}, {
+      preserveScroll: true,
+      onSuccess: () => {
+        router.reload();
+        alert(`Job listing has been ${!job.is_active ? 'activated' : 'deactivated'}.`);
+      },
+      onError: (error) => {
+        console.error(error);
+        alert('Failed to update job status. Please try again.');
+      },
+      onFinish: () => setTogglingId(null),
+    });
+  };
+
+  const canEditJob = (job) => {
+    if (canEditJobs) return true;
+    if (isEmployer && job.employer_id === currentUser?.id) return true;
+    return false;
+  };
+
+  const canDeleteJob = () => {
+    if (canDeleteJobs) return true;
+    return false;
+  };
+
+  const formatDate = (date) => {
+    if (!date) return 'N/A';
+    return new Date(date).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+
+  const getJobTypeBadge = (type) => {
+    const types = {
+      'full-time': 'bg-green-100 text-green-800',
+      'part-time': 'bg-yellow-100 text-yellow-800',
+      'contract': 'bg-blue-100 text-blue-800',
+      'internship': 'bg-orange-100 text-orange-800',
+      'remote': 'bg-indigo-100 text-indigo-800',
+      'hybrid': 'bg-purple-100 text-purple-800'
     };
+    return types[type] || 'bg-gray-100 text-gray-800';
+  };
 
-    const toggleSelectAll = (checked) => {
-        if (checked) {
-            setSelectedIds(jobListings.data.map(j => j.id));
-        } else {
-            setSelectedIds([]);
-        }
+  const getExperienceBadge = (level) => {
+    const levels = {
+      'entry': 'bg-blue-100 text-blue-800',
+      'junior': 'bg-cyan-100 text-cyan-800',
+      'mid-level': 'bg-teal-100 text-teal-800',
+      'senior': 'bg-purple-100 text-purple-800',
+      'lead': 'bg-orange-100 text-orange-800',
+      'executive': 'bg-red-100 text-red-800'
     };
+    return levels[level] || 'bg-gray-100 text-gray-800';
+  };
 
-    const handleDelete = async (e) => {
-        e.preventDefault();
-        if (!confirm('Delete selected listings?')) return;
-        setIsDeleting(true);
-        try {
-            await fetch(route('backend.listing.bulk-delete'), {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                    'Accept': 'application/json',
-                },
-                body: JSON.stringify({ ids: selectedIds }),
-            });
-            window.location.reload();
-        } catch (err) {
-            alert('Failed to delete listings.');
-        } finally {
-            setIsDeleting(false);
-        }
-    };
+  const getSalaryRange = (job) => {
+    if (job.as_per_companies_policy) {
+      return 'As per company policy';
+    }
+    if (job.is_salary_negotiable) {
+      return 'Negotiable';
+    }
+    if (job.salary_min && job.salary_max) {
+      return `${job.salary_min.toLocaleString()} - ${job.salary_max.toLocaleString()}`;
+    }
+    if (job.salary_min) {
+      return `From ${job.salary_min.toLocaleString()}`;
+    }
+    return null;
+  };
 
-    const statCards = [
-        { title: 'Active Jobs', value: activeJobs, trend: '+12%', trendColor: 'text-green-600' },
-        { title: 'Inactive Jobs', value: inactiveJobs, trend: '-3%', trendColor: 'text-red-600' },
-        { title: 'Deleted Jobs', value: deletedJobs, trend: '+1', trendColor: 'text-amber-600' },
-        { title: 'Total Views', value: totalViews, trend: '+8%', trendColor: 'text-blue-600' },
-        { title: 'Total Jobs', value: totalJobs, trend: '+15%', trendColor: 'text-green-600' },
-    ];
+  const formatLocations = (locations) => {
+    if (!locations || locations.length === 0) return 'N/A';
+    if (locations.length === 1) return locations[0].name;
+    return `${locations[0].name} +${locations.length - 1}`;
+  };
+
+  const canSelectJob = (job) => {
+    return !job.deleted_at && (canEditJobs || (isEmployer && job.employer_id === currentUser?.id));
+  };
+
+  const selectableJobsCount = sortedJobListings.filter(job => canSelectJob(job)).length;
+  const allSelectableSelected = selectedJobs.length === selectableJobsCount && selectableJobsCount > 0;
+
+  const Pagination = () => {
+    if (!pagination || pagination.lastPage <= 1) return null;
+
+    const pages = [];
+    const maxVisible = 5;
+    let startPage = Math.max(1, pagination.currentPage - Math.floor(maxVisible / 2));
+    const endPage = Math.min(pagination.lastPage, startPage + maxVisible - 1);
+
+    if (endPage - startPage + 1 < maxVisible) {
+      startPage = Math.max(1, endPage - maxVisible + 1);
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(i);
+    }
 
     return (
-        <AppSidebarLayout>
-            <div className="min-h-screen bg-gray-50">
-                <Head title="Job Listings" />
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-3 sm:px-6 py-3 sm:py-4 border-t border-gray-200 bg-gray-50">
+        <div className="text-xs sm:text-sm text-gray-500 text-center sm:text-left">
+          Showing <span className="font-medium">{pagination.from || 0}</span> to{' '}
+          <span className="font-medium">{pagination.to || 0}</span> of{' '}
+          <span className="font-medium">{pagination.total}</span> results
+        </div>
 
-                {selectedIds.length > 0 && (
-                    <div className="flex items-center gap-3 rounded-lg border border-blue-200 bg-blue-50 p-3 mb-6">
-                        <span className="text-sm font-medium text-blue-700">{selectedIds.length} selected</span>
-                        <button onClick={handleDelete} disabled={isDeleting} className={`rounded-md px-3 py-1.5 text-sm text-white hover:bg-red-700 transition-colors disabled:opacity-50 ${isDeleting ? 'bg-red-400' : 'bg-red-600'}`}>
-                            Delete
-                        </button>
-                    </div>
-                )}
+        <div className="flex flex-wrap items-center justify-center gap-0.5 sm:gap-1">
+          <button
+            onClick={() => handlePageChange(pagination.currentPage - 1)}
+            disabled={pagination.currentPage === 1}
+            className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs sm:text-sm flex items-center gap-0.5 sm:gap-1 transition ${pagination.currentPage === 1
+              ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+              : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+              }`}
+          >
+            <ChevronLeft size={10} />
+            <span className="hidden xs:inline">Previous</span>
+            <span className="xs:hidden">Prev</span>
+          </button>
 
-                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-8">
-                    <div className="flex flex-col gap-2">
-                        <h1 className="text-2xl font-bold text-gray-900">Job Listings</h1>
-                        <p className="text-gray-600 text-sm">Manage your active and draft job postings</p>
-                    </div>
-                    <div className="flex gap-3">
-                        <Link
-                            href={route('backend.listing.create')}
-                            className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
-                        >
-                            <Plus size={16} /> New Listing
-                        </Link>
-                        <button
-                            onClick={() => setShowTrashed(!showTrashed)}
-                            className={`flex items-center gap-2 px-4 py-2.5 border rounded-lg text-sm font-medium transition-colors ${showTrashed ? 'bg-blue-50 text-blue-600 border-blue-200' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'`}
-                        >
-                            <Trash2 size={16} />
-                            <span>{showTrashed ? 'Hide Trashed' : 'View Trashed'}</span>
-                        </button>
-                    </div>
-                </div>
+          {startPage > 1 && (
+            <>
+              <button
+                onClick={() => handlePageChange(1)}
+                className="px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs sm:text-sm bg-white text-gray-700 hover:bg-gray-100 border border-gray-300 transition"
+              >
+                1
+              </button>
+              {startPage > 2 && <span className="px-1 text-gray-400">...</span>}
+            </>
+          )}
 
-                <div className="grid gap-6 mb-8 md:grid-cols-2 lg:grid-cols-5">
-                    {statCards.map((stat) => (
-                        <div key={stat.title} className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-                            <div className="flex items-baseline gap-1 mb-1">
-                                <span className="text-2xl font-bold text-gray-900">{stat.value}</span>
-                                <span className={`text-xs font-medium ${stat.trendColor}`}>{stat.trend}</span>
-                            </div>
-                            <p className="text-sm font-medium text-gray-500">{stat.title}</p>
-                        </div>
-                    ))}
-                </div>
+          {pages.map(page => (
+            <button
+              key={page}
+              onClick={() => handlePageChange(page)}
+              className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs sm:text-sm transition ${page === pagination.currentPage
+                ? 'bg-blue-600 text-white'
+                : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+                }`}
+            >
+              {page}
+            </button>
+          ))}
 
-                <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-                    <div className="bg-gray-50 px-6 py-4 border-b border-gray-200 flex flex-col md:flex-row gap-4">
-                        <div className="relative flex-1">
-                            <input
-                                type="text"
-                                placeholder="Search jobs..."
-                                defaultValue={filters?.search || ''}
-                                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                            />
-                        </div>
-                        <select
-                            defaultValue={filters?.category || ''}
-                            onChange={(e) => {
-                                const url = new URL(window.location);
-                                url.searchParams.set('category', e.target.value);
-                                window.location.href = url.toString();
-                            }}
-                            className="px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white"
-                        >
-                            <option value="">All Categories</option>
-                            {filterOptions?.categories?.map((cat) => (
-                                <option key={cat.id} value={cat.id}>{cat.name}</option>
-                            ))}
-                        </select>
-                        <button className="px-5 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">
-                            Filter
-                        </button>
-                    </div>
+          {endPage < pagination.lastPage && (
+            <>
+              {endPage < pagination.lastPage - 1 && <span className="px-1 text-gray-400">...</span>}
+              <button
+                onClick={() => handlePageChange(pagination.lastPage)}
+                className="px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs sm:text-sm bg-white text-gray-700 hover:bg-gray-100 border border-gray-300 transition"
+              >
+                {pagination.lastPage}
+              </button>
+            </>
+          )}
 
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left text-sm">
-                            <thead>
-                                <tr className="bg-gray-50 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase border-b border-gray-200">
-                                    <th className="px-6 py-4">
-                                        <input
-                                            type="checkbox"
-                                            checked={selectedIds.length === jobListings.data.length && jobListings.data.length > 0}
-                                            onChange={(e) => toggleSelectAll(e.target.checked)}
-                                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                                        />
-                                    </th>
-                                    <th className="px-6 py-4">Job Title</th>
-                                    <th className="px-6 py-4">Category</th>
-                                    <th className="px-6 py-4">Employer</th>
-                                    <th className="px-6 py-4 text-center">Job Type</th>
-                                    <th className="px-6 py-4 text-center">Status</th>
-                                    <th className="px-6 py-4 text-center">Applications</th>
-                                    <th className="px-6 py-4 text-right">Views</th>
-                                    <th className="px-6 py-4 text-right">Deadline</th>
-                                    <th className="px-6 py-4 text-right">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-100">
-                                {jobListings.data.map((job) => {
-                                    const isSelected = selectedIds.includes(job.id);
-                                    return (
-                                        <tr key={job.id} className={`hover:bg-gray-50 transition-colors ${isSelected ? 'bg-blue-50' : ''}`}>
-                                            <td className="px-6 py-4">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={isSelected}
-                                                    onChange={() => toggleSelect(job.id)}
-                                                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                                                />
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <Link
-                                                    href={route('backend.listing.show', job.id)}
-                                                    className="font-medium text-gray-900 hover:text-blue-600"
-                                                >
-                                                    {job.title}
-                                                </Link>
-                                                <br />
-                                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-700">
-                                                    {job.category?.name || 'Uncategorized'}
-                                                </span>
-                                            </td>
-                                            <td className="px-6 py-4 text-gray-600">{job.category?.name || '-'}</td>
-                                            <td className="px-6 py-4 text-gray-600">{job.employer?.name || 'Unknown'}</td>
-                                            <td className="px-6 py-4 text-center">
-                                                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium bg-gray-100 text-gray-700">
-                                                    {job.job_type?.replace('_', ' ') || '-'}
-                                                </span>
-                                            </td>
-                                            <td className="px-6 py-4 text-center">
-                                                {statusBadge(job.is_active)}
-                                            </td>
-                                            <td className="px-6 py-4 text-center text-gray-600">{job.applications?.length || 0}</td>
-                                            <td className="px-6 py-4 text-right text-gray-600">{job.views_count || 0}</td>
-                                            <td className="px-6 py-4 text-right text-gray-600">
-                                                {job.application_deadline ? new Date(job.application_deadline).toLocaleDateString() : '-'}
-                                            </td>
-                                            <td className="px-6 py-4 text-right">
-                                                <div className="flex items-center gap-2">
-                                                    <Link
-                                                        href={route('backend.listing.show', job.id)}
-                                                        className="text-blue-600 hover:text-blue-700 text-sm"
-                                                        title="View"
-                                                    >
-                                                        <Eye size={16} />
-                                                    </Link>
-                                                    <Link
-                                                        href={route('backend.listing.edit', job.id)}
-                                                        className="text-gray-600 hover:text-gray-800 text-sm"
-                                                        title="Edit"
-                                                    >
-                                                        <Edit3 size={16} />
-                                                    </Link>
-                                                    <button
-                                                        onClick={(e) => {
-                                                            e.preventDefault();
-                                                            if (confirm('Delete this listing?')) {
-                                                                fetch(route('backend.listing.destroy', job.id), {
-                                                                    method: 'DELETE',
-                                                                    headers: {
-                                                                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                                                                        'Accept': 'application/json',
-                                                                    },
-                                                                }).then(() => window.location.reload());
-                                                            }
-                                                        }}
-                                                        className="text-red-600 hover:text-red-700 text-sm"
-                                                        title="Delete"
-                                                    >
-                                                        <Trash2 size={16} />
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    );
-                                })}
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex justify-between items-center">
-                        <div className="text-sm text-gray-600">
-                            Showing {jobListings.data.length} of {jobListings.total} listings
-                        </div>
-                        <div className="flex gap-1">
-                            {Array.from({ length: jobListings.last_page }, (_, i) => i + 1).map((page) => (
-                                <a
-                                    key={page}
-                                    href={route('backend.listing', { page }) + (filters?.category ? `?category=${filters.category}` : '')}
-                                    className={`w-9 h-9 flex items-center justify-center rounded-lg text-sm font-medium transition-colors ${
-                                        jobListings.current_page === page
-                                            ? 'bg-blue-600 text-white'
-                                            : 'text-gray-600 hover:bg-gray-100 hover:text-blue-600'
-                                    }`}
-                                >
-                                    {page}
-                                </a>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </AppSidebarLayout>
+          <button
+            onClick={() => handlePageChange(pagination.currentPage + 1)}
+            disabled={pagination.currentPage === pagination.lastPage}
+            className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs sm:text-sm flex items-center gap-0.5 sm:gap-1 transition ${pagination.currentPage === pagination.lastPage
+              ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+              : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+              }`}
+          >
+            <span className="hidden xs:inline">Next</span>
+            <span className="xs:hidden">Next</span>
+            <ChevronRight size={10} />
+          </button>
+        </div>
+      </div>
     );
+  };
+
+  return (
+    <AppSidebarLayout>
+      <Head title="Job Listings" />
+
+      <div className="min-h-screen bg-linear-to-br from-gray-50 to-gray-100 p-3 sm:p-4 text-black">
+        <div className="mx-auto">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-bold bg-linear-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
+                Job Listings
+              </h1>
+              <p className="text-xs sm:text-sm text-gray-500 mt-0.5 sm:mt-1">
+                Manage all job postings in one place
+              </p>
+              <div className="flex flex-wrap gap-2 sm:gap-3 mt-1.5 sm:mt-2">
+                <span className="inline-flex items-center gap-1 text-[10px] sm:text-xs">
+                  <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-green-500" />
+                  Active: {activeCount}
+                </span>
+                <span className="inline-flex items-center gap-1 text-[10px] sm:text-xs">
+                  <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-red-500" />
+                  Inactive: {inactiveCount}
+                </span>
+                <span className="inline-flex items-center gap-1 text-[10px] sm:text-xs">
+                  <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-gray-400" />
+                  Deleted: {deletedCount}
+                </span>
+                <span className="inline-flex items-center gap-1 text-[10px] sm:text-xs text-blue-600">
+                  <Eye className="text-blue-500" size={10} />
+                  Views: {totalViewsAll.toLocaleString()}
+                </span>
+                {hasActiveFilters() && (
+                  <span className="inline-flex items-center gap-1 text-[10px] sm:text-xs text-blue-600">
+                    <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                    Filtered
+                  </span>
+                )}
+                {pagination && (
+                  <span className="inline-flex items-center gap-1 text-[10px] sm:text-xs text-gray-500">
+                    <span className="w-1.5 h-1.5 rounded-full bg-gray-400" />
+                    Total: {totalCount}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg flex items-center justify-center gap-2 transition-all duration-200 text-xs sm:text-sm ${showFilters || hasActiveFilters()
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  }`}
+              >
+                <Filter size={12} />
+                Filters
+                {hasActiveFilters() && (
+                  <span className="ml-0.5 sm:ml-1 bg-white text-blue-600 rounded-full w-4 h-4 sm:w-5 sm:h-5 text-[10px] sm:text-xs flex items-center justify-center">
+                    {Object.values(filters).filter(v => v !== 'all' && v !== '').length}
+                  </span>
+                )}
+                {showFilters ? <ChevronUp size={10} /> : <ChevronDown size={10} />}
+              </button>
+
+              <Can permission="jobs.create">
+                <a
+                  href={route('backend.listing.create')}
+                  className="flex-1 sm:flex-none bg-linear-to-r from-blue-600 to-blue-700 text-white px-3 sm:px-5 py-2 sm:py-2.5 rounded-lg flex items-center justify-center gap-1.5 sm:gap-2 hover:from-blue-700 hover:to-blue-800 transition-all duration-200 transform hover:scale-105 shadow-md hover:shadow-lg text-xs sm:text-sm"
+                >
+                  <Plus size={14} />
+                  Create Job
+                </a>
+              </Can>
+            </div>
+          </div>
+
+          {selectedJobs.length > 0 && (
+            <div className="bg-linear-to-r from-blue-50 to-indigo-50 rounded-xl shadow-lg p-3 sm:p-4 mb-4 sm:mb-6 border border-blue-200">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <CheckDouble className="text-blue-600" size={16} />
+                  <span className="font-semibold text-gray-900 text-sm sm:text-base">
+                    {selectedJobs.length} job(s) selected
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-1.5 sm:gap-2 w-full sm:w-auto">
+                  {canBulkActivate && (
+                    <button
+                      onClick={handleBulkActivate}
+                      disabled={isBulkProcessing}
+                      className="flex-1 sm:flex-none px-3 sm:px-4 py-1.5 sm:py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all duration-200 flex items-center justify-center gap-1.5 sm:gap-2 disabled:opacity-50 text-xs sm:text-sm"
+                    >
+                      <CheckCircle2 size={12} />
+                      Activate
+                    </button>
+                  )}
+                  {canBulkDeactivate && (
+                    <button
+                      onClick={handleBulkDeactivate}
+                      disabled={isBulkProcessing}
+                      className="flex-1 sm:flex-none px-3 sm:px-4 py-1.5 sm:py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-all duration-200 flex items-center justify-center gap-1.5 sm:gap-2 disabled:opacity-50 text-xs sm:text-sm"
+                    >
+                      <Ban size={12} />
+                      Deactivate
+                    </button>
+                  )}
+                  {canBulkDelete && (
+                    <button
+                      onClick={handleBulkDelete}
+                      disabled={isBulkProcessing}
+                      className="flex-1 sm:flex-none px-3 sm:px-4 py-1.5 sm:py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all duration-200 flex items-center justify-center gap-1.5 sm:gap-2 disabled:opacity-50 text-xs sm:text-sm"
+                    >
+                      <Trash2 size={12} />
+                      Delete
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setSelectedJobs([])}
+                    className="flex-1 sm:flex-none px-3 sm:px-4 py-1.5 sm:py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-all duration-200 text-xs sm:text-sm"
+                  >
+                    Clear
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {showFilters && (
+            <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 mb-4 sm:mb-6">
+              <div className="flex justify-between items-center mb-3 sm:mb-4">
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900">Filter Job Listings</h3>
+                <button
+                  onClick={resetFilters}
+                  className="text-xs sm:text-sm text-red-600 hover:text-red-800 flex items-center gap-1"
+                >
+                  <Times size={10} />
+                  Reset all
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">Search</label>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={12} />
+                    <input
+                      type="text"
+                      value={filters.search}
+                      onChange={(e) => handleFilterChange('search', e.target.value)}
+                      placeholder="Search by title..."
+                      className="w-full pl-8 sm:pl-10 pr-3 sm:pr-4 py-1.5 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">Status</label>
+                  <select
+                    value={filters.status}
+                    onChange={(e) => handleFilterChange('status', e.target.value)}
+                    className="w-full px-3 sm:px-4 py-1.5 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+                  >
+                    <option value="all">All Statuses</option>
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                    <option value="trashed">Deleted</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">Job Type</label>
+                  <select
+                    value={filters.jobType}
+                    onChange={(e) => handleFilterChange('jobType', e.target.value)}
+                    className="w-full px-3 sm:px-4 py-1.5 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+                  >
+                    <option value="all">All Types</option>
+                    {uniqueJobTypes.map(type => (
+                      <option key={type} value={type}>{type.replace('-', ' ')}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">Experience Level</label>
+                  <select
+                    value={filters.experienceLevel}
+                    onChange={(e) => handleFilterChange('experienceLevel', e.target.value)}
+                    className="w-full px-3 sm:px-4 py-1.5 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+                  >
+                    <option value="all">All Levels</option>
+                    {uniqueExperienceLevels.map(level => (
+                      <option key={level} value={level}>{level}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">Category</label>
+                  <select
+                    value={filters.category}
+                    onChange={(e) => handleFilterChange('category', e.target.value)}
+                    className="w-full px-3 sm:px-4 py-1.5 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+                  >
+                    <option value="all">All Categories</option>
+                    {uniqueCategories.map(cat => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">Location</label>
+                  <select
+                    value={filters.location}
+                    onChange={(e) => handleFilterChange('location', e.target.value)}
+                    className="w-full px-3 sm:px-4 py-1.5 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+                  >
+                    <option value="all">All Locations</option>
+                    {uniqueLocations.map(loc => (
+                      <option key={loc} value={loc}>{loc}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">Deadline</label>
+                  <select
+                    value={filters.dateRange}
+                    onChange={(e) => handleFilterChange('dateRange', e.target.value)}
+                    className="w-full px-3 sm:px-4 py-1.5 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+                  >
+                    <option value="all">Any Time</option>
+                    <option value="today">Today</option>
+                    <option value="week">Next 7 Days</option>
+                    <option value="month">Next 30 Days</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="bg-white rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl">
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-2 sm:px-4 py-3 sm:py-4 text-left">
+                      <input
+                        type="checkbox"
+                        checked={allSelectableSelected}
+                        onChange={handleSelectAll}
+                        className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                        disabled={selectableJobsCount === 0}
+                      />
+                    </th>
+                    <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-[10px] sm:text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      Job Details
+                    </th>
+                    <th className="hidden md:table-cell px-3 sm:px-6 py-3 sm:py-4 text-left text-[10px] sm:text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      Location(s)
+                    </th>
+                    <th className="hidden lg:table-cell px-3 sm:px-6 py-3 sm:py-4 text-left text-[10px] sm:text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      Type & Level
+                    </th>
+                    <th className="hidden xl:table-cell px-3 sm:px-6 py-3 sm:py-4 text-left text-[10px] sm:text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      Views & Apps
+                    </th>
+                    <th className="hidden md:table-cell px-3 sm:px-6 py-3 sm:py-4 text-left text-[10px] sm:text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      Deadline
+                    </th>
+                    <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-[10px] sm:text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-3 sm:px-6 py-3 sm:py-4 text-right text-[10px] sm:text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {sortedJobListings.length === 0 && (
+                    <tr>
+                      <td colSpan="8" className="text-center py-12 sm:py-16">
+                        <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                          <Briefcase className="h-8 w-8 sm:h-10 sm:w-10 text-gray-400" />
+                        </div>
+                        <h3 className="text-base sm:text-lg font-medium text-gray-900">No job listings found</h3>
+                        <p className="mt-1 text-xs sm:text-sm text-gray-500">
+                          {hasActiveFilters() ? 'Try adjusting your filters.' : 'Get started by creating a new job posting.'}
+                        </p>
+                        {hasActiveFilters() && (
+                          <div className="mt-4 sm:mt-6">
+                            <button
+                              onClick={resetFilters}
+                              className="inline-flex items-center px-4 sm:px-5 py-2 sm:py-2.5 border border-transparent shadow-sm text-xs sm:text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700"
+                            >
+                              <Times className="mr-1.5 sm:mr-2" size={14} />
+                              Clear Filters
+                            </button>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  )}
+
+                  {sortedJobListings.map((job, index) => {
+                    const trashed = job.deleted_at !== null;
+                    const applicationsCount = job.applications_count || 0;
+                    const viewsCount = job.views_count || 0;
+                    const salaryDisplay = getSalaryRange(job);
+                    const canEdit = canEditJob(job);
+                    const canDelete = canDeleteJob(job);
+                    const canToggleThis = canToggleJobs || (isEmployer && job.employer_id === currentUser?.id);
+                    const canSelect = canSelectJob(job);
+
+                    return (
+                      <tr
+                        key={job.id}
+                        className={`hover:bg-gray-50 transition-all duration-200 ${trashed ? 'bg-gray-50 opacity-75' : ''} ${selectedJobs.includes(job.id) ? 'bg-blue-50' : ''}`}
+                        style={{ animationDelay: `${index * 50}ms` }}
+                      >
+                        <td className="px-2 sm:px-4 py-3 sm:py-4">
+                          {canSelect && (
+                            <input
+                              type="checkbox"
+                              checked={selectedJobs.includes(job.id)}
+                              onChange={() => handleSelectJob(job.id)}
+                              className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                            />
+                          )}
+                        </td>
+
+                        <td className="px-3 sm:px-6 py-3 sm:py-4">
+                          <div className="flex items-center gap-2 sm:gap-3">
+                            <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center shrink-0 ${trashed ? 'bg-gray-300' : job.is_active ? 'bg-green-100' : 'bg-yellow-100'}`}>
+                              <Briefcase className={trashed ? 'text-gray-500' : job.is_active ? 'text-green-600' : 'text-yellow-600'} size={14} />
+                            </div>
+                            <div className="min-w-0">
+                              <div className={`text-sm sm:text-base font-semibold truncate ${trashed ? 'line-through text-gray-400' : 'text-gray-900'}`}>
+                                {job.title}
+                              </div>
+                              <div className={`text-[10px] sm:text-sm mt-0.5 sm:mt-1 truncate ${trashed ? 'text-gray-400' : 'text-gray-500'}`}>
+                                {job.category?.name || 'N/A'}
+                              </div>
+                              {salaryDisplay && (
+                                <div className={`text-[10px] sm:text-xs mt-0.5 sm:mt-1 font-medium truncate ${trashed ? 'text-gray-400' : 'text-green-600'}`}>
+                                  {salaryDisplay}
+                                </div>
+                              )}
+                              {!trashed && isEmployer && job.employer_id === currentUser?.id && (
+                                <div className="text-[10px] sm:text-xs text-blue-500 mt-0.5 sm:mt-1">
+                                  Your Job
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </td>
+
+                        <td className="hidden md:table-cell px-3 sm:px-6 py-3 sm:py-4">
+                          <div className="flex items-center gap-1.5 sm:gap-2">
+                            <MapPin className={trashed ? 'text-gray-400' : 'text-gray-400'} size={12} />
+                            <span className={`text-xs sm:text-sm ${trashed ? 'text-gray-400' : 'text-gray-700'}`}>
+                              {formatLocations(job.locations)}
+                            </span>
+                          </div>
+                          {job.locations && job.locations.length > 1 && (
+                            <div className="text-[10px] sm:text-xs text-gray-400 mt-0.5 sm:mt-1 truncate">
+                              {job.locations.map(loc => loc.name).join(', ')}
+                            </div>
+                          )}
+                        </td>
+
+                        <td className="hidden lg:table-cell px-3 sm:px-6 py-3 sm:py-4">
+                          <div className="space-y-1.5 sm:space-y-2">
+                            {!trashed ? (
+                              <>
+                                <span className={`inline-flex px-1.5 sm:px-2 py-0.5 sm:py-1 text-[10px] sm:text-xs font-semibold rounded-full ${getJobTypeBadge(job.job_type)}`}>
+                                  {job.job_type?.replace('-', ' ') || 'N/A'}
+                                </span>
+                                <br />
+                                <span className={`inline-flex px-1.5 sm:px-2 py-0.5 sm:py-1 text-[10px] sm:text-xs font-semibold rounded-full ${getExperienceBadge(job.experience_level)}`}>
+                                  {job.experience_level || 'N/A'}
+                                </span>
+                              </>
+                            ) : (
+                              <>
+                                <span className="inline-flex px-1.5 sm:px-2 py-0.5 sm:py-1 text-[10px] sm:text-xs font-semibold rounded-full bg-gray-200 text-gray-500">
+                                  {job.job_type?.replace('-', ' ') || 'N/A'}
+                                </span>
+                                <br />
+                                <span className="inline-flex px-1.5 sm:px-2 py-0.5 sm:py-1 text-[10px] sm:text-xs font-semibold rounded-full bg-gray-200 text-gray-500">
+                                  {job.experience_level || 'N/A'}
+                                </span>
+                              </>
+                            )}
+                          </div>
+                        </td>
+
+                        <td className="hidden xl:table-cell px-3 sm:px-6 py-3 sm:py-4">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-1.5 sm:gap-2">
+                              <Eye className={`text-xs sm:text-sm ${trashed ? 'text-gray-400' : 'text-blue-500'}`} size={12} />
+                              <span className={`text-xs sm:text-sm font-medium ${trashed ? 'text-gray-400' : 'text-gray-700'}`}>
+                                {viewsCount.toLocaleString()} views
+                              </span>
+                            </div>
+                            {!trashed && (
+                              <a
+                                href={route('backend.applications.job', job.id)}
+                                className="flex items-center gap-1.5 sm:gap-2 hover:text-purple-700 transition-colors"
+                              >
+                                <Users className={`text-xs sm:text-sm ${trashed ? 'text-gray-400' : 'text-purple-500'}`} size={12} />
+                                <span className={`text-xs sm:text-sm font-medium ${trashed ? 'text-gray-400' : 'text-gray-700'}`}>
+                                  {applicationsCount.toLocaleString()} apps
+                                </span>
+                              </a>
+                            )}
+                          </div>
+                        </td>
+
+                        <td className="hidden md:table-cell px-3 sm:px-6 py-3 sm:py-4">
+                          <div className="flex items-center gap-1.5 sm:gap-2">
+                            <Calendar className={trashed ? 'text-gray-400' : 'text-gray-400'} size={12} />
+                            <span className={`text-xs sm:text-sm ${trashed ? 'text-gray-400' : 'text-gray-700'}`}>
+                              {formatDate(job.application_deadline)}
+                            </span>
+                          </div>
+                          {!trashed && job.application_deadline && new Date(job.application_deadline) < new Date() && job.is_active && (
+                            <span className="text-[10px] sm:text-xs text-red-500 mt-0.5 sm:mt-1 block">
+                              Expired
+                            </span>
+                          )}
+                          {trashed && (
+                            <span className="text-[10px] sm:text-xs text-gray-400 mt-0.5 sm:mt-1 block">
+                              Deleted: {formatDate(job.deleted_at)}
+                            </span>
+                          )}
+                        </td>
+
+                        <td className="px-3 sm:px-6 py-3 sm:py-4">
+                          <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium border ${job.is_active ? 'bg-green-100 text-green-600 border-green-100' : 'bg-gray-50 text-gray-600 border-gray-100'}`}>
+                            {job.is_active ? 'Active' : 'Inactive'}
+                          </span>
+                          {trashed && (
+                            <span className="block mt-1 text-[10px] text-gray-400">Trashed</span>
+                          )}
+                        </td>
+
+                        <td className="px-3 sm:px-6 py-3 sm:py-4 text-right">
+                          <div className="flex items-center gap-1.5">
+                            <Link
+                              href={route('backend.listing.show', job.id)}
+                              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-sm"
+                              title="View"
+                            >
+                              <Eye size={14} />
+                            </Link>
+                            {canEdit && (
+                              <Link
+                                href={route('backend.listing.edit', job.id)}
+                                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-sm"
+                                title="Edit"
+                              >
+                                <Edit3 size={14} />
+                              </Link>
+                            )}
+                            {canToggleThis && !trashed && (
+                              <button
+                                onClick={() => handleToggle(job)}
+                                disabled={togglingId === job.id}
+                                className={`text-xs sm:text-sm p-1.5 rounded hover:bg-gray-100 transition-colors ${togglingId === job.id ? 'opacity-50' : ''}`} title="Toggle Status"
+                              >
+                                {job.is_active ? <ToggleOff size={14} className="text-red-600" /> : <ToggleOn size={14} className="text-green-600" />}
+                              </button>
+                            )}
+                            {!trashed && canDelete && (
+                              <button
+                                onClick={() => handleDelete(job.id)}
+                                disabled={deletingId === job.id}
+                                className="text-red-600 hover:text-red-700 text-sm"
+                                title="Delete"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            )}
+                            {trashed && canRestoreJobs && (
+                              <button
+                                onClick={() => handleRestore(job.id)}
+                                disabled={restoringId === job.id}
+                                className="text-green-600 hover:text-green-700 text-sm"
+                                title="Restore"
+                              >
+                                <CheckCircle2 size={14} className="text-green-600" />
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            <Pagination />
+          </div>
+        </div>
+      </div>
+    </AppSidebarLayout>
+  );
 }

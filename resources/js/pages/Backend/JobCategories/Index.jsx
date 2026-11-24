@@ -1,13 +1,72 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import { ArrowLeft, Plus, Trash2, Edit3, Filter } from 'lucide-react';
 import { useState } from 'react';
+
+import { useAuth } from '@/hooks/useAuth';
+import { Can } from '@/components/Auth/Can';
 
 import AppSidebarLayout from '@/layouts/app-sidebar-layout';
 
 export default function JobCategoriesIndex({ categories }) {
+    const {
+        user: currentUser,
+        hasAnyPermission,
+    } = useAuth();
+
+    const isAdmin = hasAnyPermission(['dashboard.admin']);
+    const canManageCategories = hasAnyPermission(['categories.manage', 'categories.create', 'categories.update', 'categories.destroy']);
+
     const [showModal, setShowModal] = useState(false);
     const [newName, setNewName] = useState('');
     const [newSlug, setNewSlug] = useState('');
+
+    if (!canManageCategories && !isAdmin) {
+        return (
+            <AppSidebarLayout>
+                <Head title="Access Denied" />
+                <div className="min-h-screen flex items-center justify-center px-4">
+                    <div className="text-center max-w-md">
+                        <div className="w-20 h-20 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <span className="text-2xl text-red-500">🚫</span>
+                        </div>
+                        <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Access Denied</h2>
+                        <p className="text-gray-500 dark:text-gray-400 mt-2">You don't have permission to manage categories.</p>
+                    </div>
+                </div>
+            </AppSidebarLayout>
+        );
+    }
+
+    const handleCreate = (e) => {
+        e.preventDefault();
+        router.post(route('categories.store'), {
+            name: newName,
+            slug: newSlug,
+            is_active: true,
+        }, {
+            onSuccess: () => {
+                setShowModal(false);
+                setNewName('');
+                setNewSlug('');
+                router.reload();
+            },
+            onError: () => {
+                alert('Failed to create category.');
+            },
+        });
+    };
+
+    const handleDelete = (id) => {
+        if (!confirm('Delete this category?')) return;
+        router.delete(route('categories.destroy', id), {
+            onSuccess: () => {
+                router.reload();
+            },
+            onError: () => {
+                alert('Failed to delete category.');
+            },
+        });
+    };
 
     return (
         <AppSidebarLayout>
@@ -19,16 +78,18 @@ export default function JobCategoriesIndex({ categories }) {
                         <h1 className="text-2xl font-bold text-gray-900">Job Categories</h1>
                         <p className="text-gray-600 text-sm">Manage job categories</p>
                     </div>
-                    <button
-                        onClick={() => {
-                            setNewName('');
-                            setNewSlug('');
-                            setShowModal(true);
-                        }}
-                        className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
-                    >
-                        <Plus size={16} /> Add Category
-                    </button>
+                    <Can permission="categories.create">
+                        <button
+                            onClick={() => {
+                                setNewName('');
+                                setNewSlug('');
+                                setShowModal(true);
+                            }}
+                            className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+                        >
+                            <Plus size={16} /> Add Category
+                        </button>
+                    </Can>
                 </div>
 
                 <div className="relative">
@@ -72,22 +133,14 @@ export default function JobCategoriesIndex({ categories }) {
                                             >
                                                 <Edit3 size={16} />
                                             </Link>
-                                            <button
-                                                onClick={() => {
-                                                    if (confirm('Delete this category?')) {
-                                                        fetch(route('categories.destroy', cat.id), {
-                                                            method: 'DELETE',
-                                                            headers: {
-                                                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                                                                'Accept': 'application/json',
-                                                            },
-                                                        }).then(() => window.location.reload());
-                                                    }
-                                                }}
-                                                className="text-red-600 hover:text-red-700 text-sm"
-                                            >
-                                                <Trash2 size={16} />
-                                            </button>
+                                            <Can permission="categories.destroy">
+                                                <button
+                                                    onClick={() => handleDelete(cat.id)}
+                                                    className="text-red-600 hover:text-red-700 text-sm"
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            </Can>
                                         </div>
                                     </td>
                                 </tr>
@@ -127,30 +180,7 @@ export default function JobCategoriesIndex({ categories }) {
                     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
                         <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-md">
                             <h2 className="text-lg font-bold text-gray-900 mb-4">Add Category</h2>
-                            <form
-                                onSubmit={(e) => {
-                                    e.preventDefault();
-                                    fetch(route('categories.store'), {
-                                        method: 'POST',
-                                        headers: {
-                                            'Content-Type': 'application/json',
-                                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                                            'Accept': 'application/json',
-                                        },
-                                        body: JSON.stringify({
-                                            name: newName,
-                                            slug: newSlug,
-                                            is_active: true,
-                                        }),
-                                    })
-                                        .then(() => {
-                                            setShowModal(false);
-                                            window.location.reload();
-                                        })
-                                        .catch(() => alert('Failed to create category.'));
-                                }}
-                                className="space-y-4"
-                            >
+                            <form onSubmit={handleCreate} className="space-y-4">
                                 <div className="space-y-2">
                                     <label className="block text-sm font-medium text-gray-700">Name</label>
                                     <input
@@ -191,7 +221,7 @@ export default function JobCategoriesIndex({ categories }) {
                             </form>
                         </div>
                     </div>
-                </div>
+                )}
             </div>
         </AppSidebarLayout>
     );

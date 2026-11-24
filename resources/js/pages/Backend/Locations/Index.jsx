@@ -1,13 +1,72 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import { ArrowLeft, Plus, Trash2, Edit3, Filter, MapPin } from 'lucide-react';
 import { useState } from 'react';
+
+import { useAuth } from '@/hooks/useAuth';
+import { Can } from '@/components/Auth/Can';
 
 import AppSidebarLayout from '@/layouts/app-sidebar-layout';
 
 export default function LocationsIndex({ locations }) {
+    const {
+        user: currentUser,
+        hasAnyPermission,
+    } = useAuth();
+
+    const isAdmin = hasAnyPermission(['dashboard.admin']);
+    const canManageLocations = hasAnyPermission(['locations.manage', 'locations.create', 'locations.update', 'locations.destroy']);
+
     const [showModal, setShowModal] = useState(false);
     const [newName, setNewName] = useState('');
     const [newAddress, setNewAddress] = useState('');
+
+    if (!canManageLocations && !isAdmin) {
+        return (
+            <AppSidebarLayout>
+                <Head title="Access Denied" />
+                <div className="min-h-screen flex items-center justify-center px-4">
+                    <div className="text-center max-w-md">
+                        <div className="w-20 h-20 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <span className="text-2xl text-red-500">🚫</span>
+                        </div>
+                        <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Access Denied</h2>
+                        <p className="text-gray-500 dark:text-gray-400 mt-2">You don't have permission to manage locations.</p>
+                    </div>
+                </div>
+            </AppSidebarLayout>
+        );
+    }
+
+    const handleCreate = (e) => {
+        e.preventDefault();
+        router.post(route('locations.store'), {
+            name: newName,
+            address: newAddress,
+            is_active: true,
+        }, {
+            onSuccess: () => {
+                setShowModal(false);
+                setNewName('');
+                setNewAddress('');
+                router.reload();
+            },
+            onError: () => {
+                alert('Failed to create location.');
+            },
+        });
+    };
+
+    const handleDelete = (id) => {
+        if (!confirm('Delete this location?')) return;
+        router.delete(route('locations.destroy', id), {
+            onSuccess: () => {
+                router.reload();
+            },
+            onError: () => {
+                alert('Failed to delete location.');
+            },
+        });
+    };
 
     return (
         <AppSidebarLayout>
@@ -19,16 +78,18 @@ export default function LocationsIndex({ locations }) {
                         <h1 className="text-2xl font-bold text-gray-900">Locations</h1>
                         <p className="text-gray-600 text-sm">Manage job locations</p>
                     </div>
-                    <button
-                        onClick={() => {
-                            setNewName('');
-                            setNewAddress('');
-                            setShowModal(true);
-                        }}
-                        className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
-                    >
-                        <Plus size={16} /> Add Location
-                    </button>
+                    <Can permission="locations.create">
+                        <button
+                            onClick={() => {
+                                setNewName('');
+                                setNewAddress('');
+                                setShowModal(true);
+                            }}
+                            className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+                        >
+                            <Plus size={16} /> Add Location
+                        </button>
+                    </Can>
                 </div>
 
                 <div className="relative">
@@ -72,22 +133,14 @@ export default function LocationsIndex({ locations }) {
                                             >
                                                 <Edit3 size={16} />
                                             </Link>
-                                            <button
-                                                onClick={() => {
-                                                    if (confirm('Delete this location?')) {
-                                                        fetch(route('locations.destroy', loc.id), {
-                                                            method: 'DELETE',
-                                                            headers: {
-                                                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                                                                'Accept': 'application/json',
-                                                            },
-                                                        }).then(() => window.location.reload());
-                                                    }
-                                                }}
-                                                className="text-red-600 hover:text-red-700 text-sm"
-                                            >
-                                                <Trash2 size={16} />
-                                            </button>
+                                            <Can permission="locations.destroy">
+                                                <button
+                                                    onClick={() => handleDelete(loc.id)}
+                                                    className="text-red-600 hover:text-red-700 text-sm"
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            </Can>
                                         </div>
                                     </td>
                                 </tr>
@@ -127,30 +180,7 @@ export default function LocationsIndex({ locations }) {
                     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
                         <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-md">
                             <h2 className="text-lg font-bold text-gray-900 mb-4">Add Location</h2>
-                            <form
-                                onSubmit={(e) => {
-                                    e.preventDefault();
-                                    fetch(route('locations.store'), {
-                                        method: 'POST',
-                                        headers: {
-                                            'Content-Type': 'application/json',
-                                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                                            'Accept': 'application/json',
-                                        },
-                                        body: JSON.stringify({
-                                            name: newName,
-                                            address: newAddress,
-                                            is_active: true,
-                                        }),
-                                    })
-                                        .then(() => {
-                                            setShowModal(false);
-                                            window.location.reload();
-                                        })
-                                        .catch(() => alert('Failed to create location.'));
-                                }}
-                                className="space-y-4"
-                            >
+                            <form onSubmit={handleCreate} className="space-y-4">
                                 <div className="space-y-2">
                                     <label className="block text-sm font-medium text-gray-700">Name</label>
                                     <input
@@ -190,7 +220,7 @@ export default function LocationsIndex({ locations }) {
                             </form>
                         </div>
                     </div>
-                </div>
+                )}
             </div>
         </AppSidebarLayout>
     );

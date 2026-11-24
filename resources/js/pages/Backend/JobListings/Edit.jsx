@@ -1,18 +1,157 @@
-import { Head, Link, useForm } from '@inertiajs/react';
-import { ArrowLeft, Plus } from 'lucide-react';
+import { useState } from 'react';
+
+import { Head, Link, router } from '@inertiajs/react';
+
+import { useAuth } from '@/hooks/useAuth';
+import { Can } from '@/components/Auth/Can';
+
+import {
+  ArrowLeft,
+  Plus,
+  Shield,
+  Briefcase,
+  Spinner,
+  CheckCircle,
+} from 'lucide-react';
 
 import AppSidebarLayout from '@/layouts/app-sidebar-layout';
 
 export default function JobListingsEdit({ jobListing, categories, locations }) {
+    const {
+        user: currentUser,
+        hasAnyPermission,
+        hasRole,
+    } = useAuth();
+
+    const canViewJobs = hasAnyPermission(['jobs.view', 'jobs.manage']);
+    const isEmployer = hasRole('employer') || hasRole('employer-admin');
+    const canEditJobs = hasAnyPermission(['jobs.update', 'jobs.manage']);
+
+    const canEdit = canEditJobs || (isEmployer && jobListing.employer_id === currentUser?.id);
+
+    if (!canEdit) {
+        return (
+            <AppSidebarLayout>
+                <Head title="Access Denied" />
+                <div className="min-h-screen flex items-center justify-center px-4">
+                    <div className="text-center max-w-md">
+                        <div className="w-20 h-20 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <Shield className="w-10 h-10 text-red-500" />
+                        </div>
+                        <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Access Denied</h2>
+                        <p className="text-gray-500 dark:text-gray-400 mt-2">You don't have permission to edit this job listing.</p>
+                        <Link
+                            href={route('backend.listing.index')}
+                            className="mt-4 inline-block px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                        >
+                            Back to Job Listings
+                        </Link>
+                    </div>
+                </div>
+            </AppSidebarLayout>
+        );
+    }
+
+    const [errors, setErrors] = useState({});
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [formData, setFormData] = useState({
+        title: jobListing.title,
+        slug: jobListing.slug,
+        category_id: jobListing.category_id,
+        description: jobListing.description,
+        job_type: jobListing.job_type,
+        experience_level: jobListing.experience_level,
+        education_requirement: jobListing.education_requirement,
+        location_ids: jobListing.locations?.map(l => l.id) || [],
+        salary_min: jobListing.salary_min || '',
+        salary_max: jobListing.salary_max || '',
+        application_deadline: jobListing.application_deadline || '',
+        is_active: jobListing.is_active,
+        is_salary_negotiable: jobListing.is_salary_negotiable,
+        as_per_companies_policy: jobListing.as_per_companies_policy,
+        required_facebook_link: jobListing.required_facebook_link,
+        required_linkedin_link: jobListing.required_linkedin_link,
+    });
+
+    const handleChange = (e) => {
+        const { name, value, type, checked } = e.target;
+        setFormData(prev => ({
+            ...prev,
+            [name]: type === 'checkbox' ? checked : value
+        }));
+        if (errors[name]) {
+            setErrors(prev => ({ ...prev, [name]: undefined }));
+        }
+    };
+
+    const handleArrayChange = (field, value) => {
+        setFormData(prev => ({ ...prev, [field]: value }));
+    };
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+
+        if (!confirm('Are you sure you want to update this job listing?')) return;
+
+        const submitData = {
+            ...formData,
+            salary_min: formData.salary_min ? parseFloat(formData.salary_min) : null,
+            salary_max: formData.salary_max ? parseFloat(formData.salary_max) : null,
+        };
+
+        setIsSubmitting(true);
+
+        router.put(route('backend.listing.update', jobListing.id), submitData, {
+            preserveScroll: true,
+            onSuccess: () => {
+                alert('Job listing updated successfully!');
+                router.visit(route('backend.listing.index'));
+            },
+            onError: (error) => {
+                if (error.response?.data?.errors) {
+                    setErrors(error.response.data.errors);
+                    alert('Please check the form for errors.');
+                } else if (error.response?.data?.message) {
+                    alert(error.response.data.message);
+                } else {
+                    alert('Failed to update job listing. Please try again.');
+                }
+                setIsSubmitting(false);
+            },
+            onFinish: () => {
+                setIsSubmitting(false);
+            },
+        });
+    };
+
+    const locationSelection = new Set(formData.location_ids);
+
+    const toggleLocation = (locationId) => {
+        const newSelection = new Set(locationSelection);
+        if (newSelection.has(locationId)) {
+            newSelection.delete(locationId);
+        } else {
+            newSelection.add(locationId);
+        }
+        handleArrayChange('location_ids', Array.from(newSelection));
+    };
+
     return (
         <AppSidebarLayout>
-            <div className="min-h-screen bg-gray-50 p-6 md:p-8 max-w-4xl mx-auto">
+            <div className="min-h-screen bg-gray-50 p-6 sm:p-8 max-w-4xl mx-auto">
                 <Head title={`Edit ${jobListing.title}`} />
 
                 <div className="flex justify-between items-center mb-8">
                     <div className="flex flex-col gap-1">
-                        <h1 className="text-2xl font-bold text-gray-900">Edit Job Listing</h1>
-                        <p className="text-gray-600 text-sm">Update job posting details</p>
+                        <div className="flex items-center gap-3">
+                            <div className="w-12 h-12 bg-linear-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg">
+                                <Briefcase className="w-6 h-6" />
+                            </div>
+                            <div>
+                                <h1 className="text-2xl font-bold text-gray-900">Edit Job Listing</h1>
+                                <p className="text-gray-600 text-sm">Update job posting details</p>
+                            </div>
+                        </div>
                     </div>
                     <Link
                         href={route('backend.listing.index')}
@@ -23,35 +162,7 @@ export default function JobListingsEdit({ jobListing, categories, locations }) {
                 </div>
 
                 <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-                    <form
-                        onSubmit={(e) => {
-                            e.preventDefault();
-                            const formData = new FormData(e.target);
-                            const data = Object.fromEntries(formData.entries());
-                            fetch(route('backend.listing.update', jobListing.id), {
-                                method: 'PUT',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                                    'Accept': 'application/json',
-                                },
-                                body: JSON.stringify({
-                                    ...data,
-                                    is_active: data.is_active === 'on',
-                                    required_facebook_link: data.required_facebook_link === 'on',
-                                    required_linkedin_link: data.required_linkedin_link === 'on',
-                                    is_salary_negotiable: data.is_salary_negotiable === 'on',
-                                    as_per_companies_policy: data.as_per_companies_policy === 'on',
-                                }),
-                            })
-                                .then((res) => res.json())
-                                .then(() => {
-                                    window.location.href = route('backend.listing.index');
-                                })
-                                .catch(() => alert('Failed to update listing.'));
-                        }}
-                        className="space-y-6"
-                    >
+                    <form onSubmit={handleSubmit} className="space-y-6">
                         <input type="hidden" name="_method" value="PUT" />
 
                         <div className="grid gap-6 md:grid-cols-2">
@@ -60,26 +171,32 @@ export default function JobListingsEdit({ jobListing, categories, locations }) {
                                 <input
                                     name="title"
                                     type="text"
-                                    defaultValue={jobListing.title}
+                                    defaultValue={formData.title}
                                     required
-                                    className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                                    onChange={handleChange}
+                                    className={`w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none ${errors.title ? 'border-red-500' : 'border-gray-300'}`}
                                 />
+                                {errors.title && <p className="text-xs text-red-600 mt-1">{errors.title[0]}</p>}
                             </div>
                             <div className="space-y-2">
                                 <label className="block text-sm font-medium text-gray-700">Slug</label>
                                 <input
                                     name="slug"
                                     type="text"
-                                    defaultValue={jobListing.slug}
+                                    defaultValue={formData.slug}
                                     required
-                                    className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                                    onChange={handleChange}
+                                    className={`w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none ${errors.slug ? 'border-red-500' : 'border-gray-300'}`}
                                 />
+                                {errors.slug && <p className="text-xs text-red-600 mt-1">{errors.slug[0]}</p>}
                             </div>
                             <div className="space-y-2 md:col-span-2">
                                 <label className="block text-sm font-medium text-gray-700">Category</label>
                                 <select
                                     name="category_id"
-                                    className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white"
+                                    defaultValue={formData.category_id}
+                                    onChange={handleChange}
+                                    className={`w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white ${errors.category_id ? 'border-red-500' : 'border-gray-300'}`}
                                 >
                                     <option value="">Select a category</option>
                                     {categories.map((cat) => (
@@ -92,6 +209,7 @@ export default function JobListingsEdit({ jobListing, categories, locations }) {
                                         </option>
                                     ))}
                                 </select>
+                                {errors.category_id && <p className="text-xs text-red-600 mt-1">{errors.category_id[0]}</p>}
                             </div>
                         </div>
 
@@ -100,11 +218,14 @@ export default function JobListingsEdit({ jobListing, categories, locations }) {
                             <textarea
                                 name="description"
                                 rows={6}
+                                defaultValue={formData.description}
                                 required
-                                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                                onChange={handleChange}
+                                className={`w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none ${errors.description ? 'border-red-500' : 'border-gray-300'}`}
                             >
-                                {jobListing.description}
+                                {formData.description}
                             </textarea>
+                            {errors.description && <p className="text-xs text-red-600 mt-1">{errors.description[0]}</p>}
                         </div>
 
                         <div className="grid gap-6 md:grid-cols-3">
@@ -112,37 +233,43 @@ export default function JobListingsEdit({ jobListing, categories, locations }) {
                                 <label className="block text-sm font-medium text-gray-700">Job Type</label>
                                 <select
                                     name="job_type"
+                                    defaultValue={formData.job_type}
+                                    onChange={handleChange}
                                     className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white"
                                 >
-                                    <option value="full_time" defaultSelected={jobListing.job_type === 'full_time'}>Full-time</option>
-                                    <option value="part_time" defaultSelected={jobListing.job_type === 'part_time'}>Part-time</option>
-                                    <option value="contract" defaultSelected={jobListing.job_type === 'contract'}>Contract</option>
-                                    <option value="freelance" defaultSelected={jobListing.job_type === 'freelance'}>Freelance</option>
-                                    <option value="remote" defaultSelected={jobListing.job_type === 'remote'}>Remote</option>
+                                    <option value="full_time">Full-time</option>
+                                    <option value="part_time">Part-time</option>
+                                    <option value="contract">Contract</option>
+                                    <option value="freelance">Freelance</option>
+                                    <option value="remote">Remote</option>
                                 </select>
                             </div>
                             <div className="space-y-2">
                                 <label className="block text-sm font-medium text-gray-700">Experience Level</label>
                                 <select
                                     name="experience_level"
+                                    defaultValue={formData.experience_level}
+                                    onChange={handleChange}
                                     className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white"
                                 >
-                                    <option value="entry_level" defaultSelected={jobListing.experience_level === 'entry_level'}>Entry Level</option>
-                                    <option value="mid_level" defaultSelected={jobListing.experience_level === 'mid_level'}>Mid Level</option>
-                                    <option value="senior_level" defaultSelected={jobListing.experience_level === 'senior_level'}>Senior Level</option>
-                                    <option value="lead" defaultSelected={jobListing.experience_level === 'lead'}>Lead</option>
+                                    <option value="entry_level">Entry Level</option>
+                                    <option value="mid_level">Mid Level</option>
+                                    <option value="senior_level">Senior Level</option>
+                                    <option value="lead">Lead</option>
                                 </select>
                             </div>
                             <div className="space-y-2">
                                 <label className="block text-sm font-medium text-gray-700">Education Requirement</label>
                                 <select
                                     name="education_requirement"
+                                    defaultValue={formData.education_requirement}
+                                    onChange={handleChange}
                                     className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white"
                                 >
-                                    <option value="high_school" defaultSelected={jobListing.education_requirement === 'high_school'}>High School</option>
-                                    <option value="bachelors" defaultSelected={jobListing.education_requirement === 'bachelors'}>Bachelor's Degree</option>
-                                    <option value="masters" defaultSelected={jobListing.education_requirement === 'masters'}>Master's Degree</option>
-                                    <option value="phd" defaultSelected={jobListing.education_requirement === 'phd'}>PhD</option>
+                                    <option value="high_school">High School</option>
+                                    <option value="bachelors">Bachelor's Degree</option>
+                                    <option value="masters">Master's Degree</option>
+                                    <option value="phd">PhD</option>
                                 </select>
                             </div>
                         </div>
@@ -153,7 +280,8 @@ export default function JobListingsEdit({ jobListing, categories, locations }) {
                                 <input
                                     name="salary_min"
                                     type="number"
-                                    defaultValue={jobListing.salary_min || ''}
+                                    defaultValue={formData.salary_min}
+                                    onChange={handleChange}
                                     className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                                 />
                             </div>
@@ -162,7 +290,8 @@ export default function JobListingsEdit({ jobListing, categories, locations }) {
                                 <input
                                     name="salary_max"
                                     type="number"
-                                    defaultValue={jobListing.salary_max || ''}
+                                    defaultValue={formData.salary_max}
+                                    onChange={handleChange}
                                     className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                                 />
                             </div>
@@ -171,7 +300,8 @@ export default function JobListingsEdit({ jobListing, categories, locations }) {
                                 <input
                                     name="application_deadline"
                                     type="date"
-                                    defaultValue={jobListing.application_deadline || ''}
+                                    defaultValue={formData.application_deadline}
+                                    onChange={handleChange}
                                     className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                                 />
                             </div>
@@ -182,7 +312,8 @@ export default function JobListingsEdit({ jobListing, categories, locations }) {
                                 <input
                                     name="is_active"
                                     type="checkbox"
-                                    defaultChecked={jobListing.is_active}
+                                    defaultChecked={formData.is_active}
+                                    onChange={handleChange}
                                     className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                                 />
                                 <label className="text-sm font-medium text-gray-700">Is Active</label>
@@ -191,7 +322,8 @@ export default function JobListingsEdit({ jobListing, categories, locations }) {
                                 <input
                                     name="is_salary_negotiable"
                                     type="checkbox"
-                                    defaultChecked={jobListing.is_salary_negotiable}
+                                    defaultChecked={formData.is_salary_negotiable}
+                                    onChange={handleChange}
                                     className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                                 />
                                 <label className="text-sm font-medium text-gray-700">Salary Negotiable</label>
@@ -200,7 +332,8 @@ export default function JobListingsEdit({ jobListing, categories, locations }) {
                                 <input
                                     name="as_per_companies_policy"
                                     type="checkbox"
-                                    defaultChecked={jobListing.as_per_companies_policy}
+                                    defaultChecked={formData.as_per_companies_policy}
+                                    onChange={handleChange}
                                     className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                                 />
                                 <label className="text-sm font-medium text-gray-700">As Per Company Policy</label>
@@ -212,7 +345,8 @@ export default function JobListingsEdit({ jobListing, categories, locations }) {
                                 <input
                                     name="required_facebook_link"
                                     type="checkbox"
-                                    defaultChecked={jobListing.required_facebook_link}
+                                    defaultChecked={formData.required_facebook_link}
+                                    onChange={handleChange}
                                     className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                                 />
                                 <label className="text-sm font-medium text-gray-700">Require Facebook Link</label>
@@ -221,7 +355,8 @@ export default function JobListingsEdit({ jobListing, categories, locations }) {
                                 <input
                                     name="required_linkedin_link"
                                     type="checkbox"
-                                    defaultChecked={jobListing.required_linkedin_link}
+                                    defaultChecked={formData.required_linkedin_link}
+                                    onChange={handleChange}
                                     className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                                 />
                                 <label className="text-sm font-medium text-gray-700">Require LinkedIn Link</label>
@@ -232,12 +367,22 @@ export default function JobListingsEdit({ jobListing, categories, locations }) {
                             <label className="block text-sm font-medium text-gray-700">Locations</label>
                             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                                 {locations.map((loc) => (
-                                    <div key={loc.id} className="flex items-center gap-2 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                                    <div
+                                        key={loc.id}
+                                        onClick={() => toggleLocation(loc.id)}
+                                        className={`flex items-center gap-2 p-3 border rounded-lg cursor-pointer transition-colors ${
+                                            locationSelection.has(loc.id)
+                                                ? 'bg-blue-50 border-blue-200'
+                                                : 'border-gray-200 hover:bg-gray-50'
+                                        }`}
+                                    >
                                         <input
                                             name="location_ids"
                                             type="checkbox"
                                             value={loc.id}
+                                            checked={locationSelection.has(loc.id)}
                                             defaultChecked={jobListing.locations?.some((l) => l.id === loc.id)}
+                                            onChange={(e) => toggleLocation(loc.id)}
                                             className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                                         />
                                         <span className="text-sm text-gray-700">{loc.name}</span>
@@ -249,9 +394,15 @@ export default function JobListingsEdit({ jobListing, categories, locations }) {
                         <div className="md:col-span-2 pt-4">
                             <button
                                 type="submit"
-                                className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+                                disabled={isSubmitting}
+                                className="flex items-center gap-2 w-full md:w-auto px-5 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                <Plus size={16} /> Update Job Listing
+                                {isSubmitting ? (
+                                    <Spinner className="animate-spin" size={16} />
+                                ) : (
+                                    <Plus size={16} />
+                                )}
+                                {isSubmitting ? 'Updating...' : 'Update Job Listing'}
                             </button>
                         </div>
                     </form>
