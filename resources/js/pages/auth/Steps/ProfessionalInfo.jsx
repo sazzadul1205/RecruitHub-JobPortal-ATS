@@ -149,7 +149,7 @@ const ProfessionalInfo = ({ data, setData }) => {
                     className="ml-0.5 p-0.5 text-gray-400 hover:text-red-600 hover:bg-white rounded-full transition"
                     aria-label={`Remove ${p.name}`}
                   >
-                    <Times className="h-2.5 w-2.5" />
+                    <X className="h-2.5 w-2.5" />
                   </button>
                 </div>
               );

@@ -25,9 +25,8 @@ import {
   ArrowLeft as FaArrowLeft, ArrowRight as FaArrowRight, Check as FaCheck,
   RotateCw as FaRedoAlt, Loader2 as FaSpinner, User as FaUser,
   FileText as FaFileAlt, Briefcase as FaBriefcase, Eye as FaEye,
-  Shield as FaShieldAlt,
+  Shield as FaShieldAlt, GraduationCap as FaGraduationCap,
 } from 'lucide-react';
-import { Work as MdWork } from 'lucide-react';
 
 import CVUpload from './Steps/CVUpload';
 import Education from './Steps/Education';
@@ -50,10 +49,10 @@ const CompleteProfile = ({ applicantProfile = null }) => {
 
   const steps = [
     { name: 'Basic', component: BasicInfo, icon: FaUser },
-    { name: 'Professional', component: ProfessionalInfo, icon: MdWork },
+    { name: 'Professional', component: ProfessionalInfo, icon: FaBriefcase },
     { name: 'CV', component: CVUpload, icon: FaFileAlt },
     { name: 'Experience', component: WorkExperience, icon: FaBriefcase },
-    { name: 'Education', component: Education, icon: MdWork },
+    { name: 'Education', component: Education, icon: FaGraduationCap },
     { name: 'Achievements', component: Achievements, icon: FaCheck },
     { name: 'Review', component: ReviewPage, icon: FaEye },
   ];
