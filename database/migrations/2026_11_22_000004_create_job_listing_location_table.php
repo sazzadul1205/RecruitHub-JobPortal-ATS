@@ -12,6 +12,7 @@ return new class extends Migration
             $table->foreignId('job_listing_id')->constrained()->index();
             $table->foreignId('location_id')->constrained()->index();
             $table->primary(['job_listing_id', 'location_id']);
+            $table->timestamps();
         });
     }
 

@@ -1,4 +1,4 @@
-import { Link, usePage } from '@inertiajs/react';
+import { Link, usePage, router } from '@inertiajs/react';
 
 const mainNavItems = [
     { title: 'Dashboard', url: '/dashboard', icon: '📊' },
@@ -75,9 +75,17 @@ export default function AppSidebarLayout({ children, breadcrumbs = [] }) {
                                 </div>
                             </div>
                             <div className="border-t border-gray-100 pt-2">
-                                <a href={route('logout')} method="post" className="block px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg">
+                                <button
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        router.post(route('logout'), {
+                                            preserveScroll: true,
+                                        });
+                                    }}
+                                    className="block w-full px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg text-left transition-colors"
+                                >
                                     Sign out
-                                </a>
+                                </button>
                             </div>
                         </div>
                     </nav>

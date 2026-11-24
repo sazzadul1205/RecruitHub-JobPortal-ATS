@@ -2,17 +2,21 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Traits\HasRoles;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, HasRoles;
 
     /**
      * The attributes that are mass assignable.
@@ -45,9 +49,66 @@ class User extends Authenticatable
         return $this->belongsTo(Role::class);
     }
 
-    public function hasRole(string $slug): bool
+    /**
+     * Applicant profile relation
+     */
+    public function applicantProfile(): HasMany
     {
-        return $this->role?->slug === $slug;
+        return $this->hasMany(ApplicantProfile::class);
+    }
+
+    /**
+     * Job listings posted by this user
+     */
+    public function jobListings(): HasMany
+    {
+        return $this->hasMany(JobListing::class);
+    }
+
+    /**
+     * Applications submitted by this user
+     */
+    public function applications(): HasMany
+    {
+        return $this->hasMany(Application::class);
+    }
+
+    /**
+     * Job views by this user
+     */
+    public function jobViews(): HasMany
+    {
+        return $this->hasMany(JobView::class);
+    }
+
+    /**
+     * Applications received for jobs posted by this user.
+     */
+    public function receivedApplications(): HasManyThrough
+    {
+        return $this->hasManyThrough(
+            Application::class,
+            JobListing::class,
+            'user_id',
+            'job_listing_id'
+        );
+    }
+
+    /**
+     * User notifications
+     */
+    public function notifications(): MorphMany
+    {
+        return $this->morphMany(DatabaseNotification::class, 'notifiable')
+            ->orderBy('created_at', 'desc');
+    }
+
+    /**
+     * Unread notifications
+     */
+    public function unreadNotifications()
+    {
+        return $this->notifications()->whereNull('read_at');
     }
 
     /**

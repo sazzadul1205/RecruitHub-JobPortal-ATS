@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\JobListing;
 
+use App\Http\Controllers\Controller;
 use App\Models\Application;
 use App\Models\JobCategory;
 use App\Models\JobListing;

@@ -1,5 +1,5 @@
-import { Head, useForm } from '@inertiajs/react';
-import { LoaderCircle, Mail, Lock, Briefcase } from 'lucide-react';
+import { Head, useForm, router } from '@inertiajs/react';
+import { LoaderCircle, Mail, Lock, Briefcase, User, Building2, ShieldCheck } from 'lucide-react';
 
 export default function Login({ status, canResetPassword }) {
     const { data, setData, post, processing, errors, reset } = useForm({
@@ -107,6 +107,59 @@ export default function Login({ status, canResetPassword }) {
                         <a href={route('register')} className="font-medium text-blue-600 hover:text-blue-700">
                             Create an account
                         </a>
+                    </p>
+                </div>
+
+                <div className="mt-8 pt-6 border-t">
+                    <h3 className="text-xs font-semibold uppercase text-gray-400 mb-4 text-center">
+                        Quick Login
+                    </h3>
+                    <div className="grid gap-2">
+                        <button
+                            onClick={() => {
+                                setData('email', 'jobseeker@example.com');
+                                setData('password', 'password');
+                                post(route('login'), {
+                                    onFinish: () => reset('password'),
+                                });
+                            }}
+                            className="w-full py-2 border border-gray-200 rounded-lg text-sm text-gray-700 hover:bg-gray-50 flex items-center justify-center gap-2 transition-colors"
+                        >
+                            <User className="size-4" />
+                            <span>Job Seeker</span>
+                            <span className="ml-auto text-xs text-gray-400">jobseeker@example.com</span>
+                        </button>
+                        <button
+                            onClick={() => {
+                                setData('email', 'employer@example.com');
+                                setData('password', 'password');
+                                post(route('login'), {
+                                    onFinish: () => reset('password'),
+                                });
+                            }}
+                            className="w-full py-2 border border-gray-200 rounded-lg text-sm text-gray-700 hover:bg-gray-50 flex items-center justify-center gap-2 transition-colors"
+                        >
+                            <Building2 className="size-4" />
+                            <span>Employer</span>
+                            <span className="ml-auto text-xs text-gray-400">employer@example.com</span>
+                        </button>
+                        <button
+                            onClick={() => {
+                                setData('email', 'admin@example.com');
+                                setData('password', 'password');
+                                post(route('login'), {
+                                    onFinish: () => reset('password'),
+                                });
+                            }}
+                            className="w-full py-2 border border-gray-200 rounded-lg text-sm text-gray-700 hover:bg-gray-50 flex items-center justify-center gap-2 transition-colors"
+                        >
+                            <ShieldCheck className="size-4" />
+                            <span>Admin</span>
+                            <span className="ml-auto text-xs text-gray-400">admin@example.com</span>
+                        </button>
+                    </div>
+                    <p className="text-xs text-gray-400 text-center mt-3">
+                        All accounts use password: password
                     </p>
                 </div>
             </div>

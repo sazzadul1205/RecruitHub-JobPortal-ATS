@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Backend;
 
+use App\Http\Controllers\Controller;
 use App\Enums\AtsCalculationStatus;
 use App\Models\ApplicantCv;
 use App\Models\ApplicantProfile;
@@ -19,6 +20,13 @@ use Inertia\Response;
 
 class ApplyController extends Controller
 {
+    protected ATSService $atsService;
+
+    public function __construct(ATSService $atsService)
+    {
+        $this->atsService = $atsService;
+    }
+
     public function index(): Response
     {
         $applications = Application::where('user_id', auth()->id())
@@ -55,7 +63,7 @@ class ApplyController extends Controller
         ]);
     }
 
-    public function store(Request $request, string $slug, ATSService $atsService): JsonResponse
+    public function store(Request $request, string $slug): JsonResponse
     {
         $jobListing = JobListing::where('slug', $slug)->firstOrFail();
         $profile = ApplicantProfile::where('user_id', auth()->id())->firstOrFail();
@@ -128,7 +136,9 @@ class ApplyController extends Controller
 
     public function show(Application $application): Response
     {
-        $this->authorizeApplication($application);
+        if ($application->user_id !== auth()->id()) {
+            abort(403, 'Unauthorized.');
+        }
 
         $application->load(['jobListing', 'applicantProfile', 'statusTimelines']);
 
@@ -156,7 +166,9 @@ class ApplyController extends Controller
 
     public function edit(Application $application): Response
     {
-        $this->authorizeApplication($application);
+        if ($application->user_id !== auth()->id()) {
+            abort(403, 'Unauthorized.');
+        }
 
         if ($application->status !== 'pending') {
             abort(403, 'Only pending applications can be edited.');
@@ -175,7 +187,9 @@ class ApplyController extends Controller
 
     public function update(Request $request, Application $application): JsonResponse
     {
-        $this->authorizeApplication($application);
+        if ($application->user_id !== auth()->id()) {
+            abort(403, 'Unauthorized.');
+        }
 
         if ($application->status !== 'pending') {
             return response()->json(['message' => 'Only pending applications can be edited.'], 422);
@@ -199,7 +213,9 @@ class ApplyController extends Controller
 
     public function destroy(Application $application): JsonResponse
     {
-        $this->authorizeApplication($application);
+        if ($application->user_id !== auth()->id()) {
+            abort(403, 'Unauthorized.');
+        }
 
         $application->delete();
 
@@ -208,7 +224,9 @@ class ApplyController extends Controller
 
     public function restore(Application $application): JsonResponse
     {
-        $this->authorizeApplication($application);
+        if ($application->user_id !== auth()->id()) {
+            abort(403, 'Unauthorized.');
+        }
 
         $application->restore();
 
@@ -217,7 +235,9 @@ class ApplyController extends Controller
 
     public function forceDelete(Application $application): JsonResponse
     {
-        $this->authorizeApplication($application);
+        if ($application->user_id !== auth()->id()) {
+            abort(403, 'Unauthorized.');
+        }
 
         if (file_exists(storage_path('app/'.$application->resume_path))) {
             Storage::delete($application->resume_path);
@@ -228,11 +248,13 @@ class ApplyController extends Controller
         return response()->json(['message' => 'Application permanently deleted.']);
     }
 
-    public function recalculateAts(Request $request, Application $application, ATSService $atsService): JsonResponse
+    public function recalculateAts(Request $request, Application $application): JsonResponse
     {
-        $this->authorizeApplication($application);
+        if ($application->user_id !== auth()->id()) {
+            abort(403, 'Unauthorized.');
+        }
 
-        $result = $atsService->calculate($application);
+        $result = $this->atsService->calculate($application);
 
         $application->update([
             'ats_score' => $result,
@@ -249,7 +271,9 @@ class ApplyController extends Controller
 
     public function getAtsStatus(Application $application): JsonResponse
     {
-        $this->authorizeApplication($application);
+        if ($application->user_id !== auth()->id()) {
+            abort(403, 'Unauthorized.');
+        }
 
         return response()->json([
             'status' => $application->ats_calculation_status,
@@ -271,12 +295,5 @@ class ApplyController extends Controller
         }
 
         return $destination;
-    }
-
-    protected function authorizeApplication(Application $application): void
-    {
-        if ($application->user_id !== auth()->id()) {
-            abort(403, 'Unauthorized.');
-        }
     }
 }
