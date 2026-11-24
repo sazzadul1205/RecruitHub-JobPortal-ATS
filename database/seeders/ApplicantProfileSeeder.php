@@ -12,8 +12,8 @@ class ApplicantProfileSeeder extends Seeder
     {
         $applicants = User::factory()->count(5)->create();
 
-        ApplicantProfile::factory()->count(5)->create([
-            'user_id' => fn () => $applicants->random()->id,
-        ]);
+        $applicants->shuffle()->each(fn ($user) => ApplicantProfile::factory()->create([
+            'user_id' => $user->id,
+        ]));
     }
 }

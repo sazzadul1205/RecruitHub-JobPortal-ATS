@@ -18,7 +18,7 @@ class AuthenticatedSessionController extends Controller
      */
     public function create(Request $request): Response
     {
-        return Inertia::render('auth/login', [
+        return Inertia::render('auth/login-jsx', [
             'canResetPassword' => Route::has('password.request'),
             'status' => $request->session()->get('status'),
         ]);
@@ -33,7 +33,14 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        $user = $request->user();
+        $roleSlug = $user->role?->slug;
+
+        return match ($roleSlug) {
+            'admin' => redirect()->intended(route('backend.listing.index', absolute: false)),
+            'employer' => redirect()->intended(route('backend.listing.index', absolute: false)),
+            default => redirect()->intended(route('backend.seeker.jobs.index', absolute: false)),
+        };
     }
 
     /**

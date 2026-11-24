@@ -7,10 +7,12 @@ use App\Models\JobListing;
 use App\Models\Location;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class PublicJobListingController extends Controller
 {
-    public function index(Request $request): JsonResponse
+    public function index(Request $request): Response
     {
         $query = JobListing::active()->with(['category', 'locations']);
 
@@ -47,10 +49,15 @@ class PublicJobListingController extends Controller
             default => $query->latest(),
         };
 
-        return response()->json($query->paginate(15));
+        return Inertia::render('seeker/jobs', [
+            'jobs' => $query->paginate(15)->withQueryString(),
+            'categories' => JobCategory::active()->get(),
+            'locations' => Location::active()->get(),
+            'filters' => $request->only(['keyword', 'category', 'location', 'job_type', 'experience_level', 'sort']),
+        ]);
     }
 
-    public function show(string $slug): JsonResponse
+    public function show(string $slug): Response
     {
         $listing = JobListing::active()->where('slug', $slug)->with(['category', 'locations'])->firstOrFail();
 
@@ -62,7 +69,7 @@ class PublicJobListingController extends Controller
             ->limit(3)
             ->get();
 
-        return response()->json([
+        return Inertia::render('seeker/job-show', [
             'job' => $listing,
             'related' => $related,
         ]);

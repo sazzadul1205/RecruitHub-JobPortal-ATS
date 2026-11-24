@@ -9,7 +9,7 @@ it('can list public jobs', function () {
     $response = $this->actingAs(User::factory()->create())->get('/backend/seeker/jobs');
 
     $response->assertStatus(200);
-    $response->assertJsonCount(3, 'data');
+    $response->assertInertia(fn ($page) => $page->where('jobs.data', fn ($jobs) => count($jobs) === 3));
 });
 
 it('can show a public job by slug', function () {
@@ -18,7 +18,7 @@ it('can show a public job by slug', function () {
     $response = $this->actingAs(User::factory()->create())->get('/backend/seeker/jobs/php-developer');
 
     $response->assertStatus(200);
-    $response->assertJsonFragment(['slug' => 'php-developer']);
+    $response->assertInertia(fn ($page) => $page->where('job.slug', 'php-developer'));
 });
 
 it('increments view count when a job is shown', function () {
