@@ -2,21 +2,24 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\ApplicationStatus;
 use App\Enums\AtsCalculationStatus;
+use App\Enums\EducationLevel;
+use App\Enums\JobType;
 use App\Models\Application;
+use App\Models\JobCategory;
 use App\Models\JobListing;
-use App\Models\User;
+use App\Models\Location;
 use App\Notifications\ApplicationStatusUpdated;
 use App\Services\ATSService;
 use App\Services\SimpleLogger;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Gate;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class ApplicationsController extends Controller
 {
-    public function index(Request $request): JsonResponse
+    public function index(Request $request): Response
     {
         $query = Application::with(['user', 'jobListing', 'applicantProfile']);
 
@@ -32,21 +35,67 @@ class ApplicationsController extends Controller
             $query->where('user_id', $request->user_id);
         }
 
-        return response()->json($query->latest()->paginate(15));
+        $applications = $query->latest()->paginate(15);
+
+        $statusCounts = Application::selectRaw('status, count(*) as count')->groupBy('status')->pluck('count', 'status')->toArray();
+        $totalApplications = Application::count();
+
+        return Inertia::render('Backend/Applications/Index', [
+            'applications' => $applications,
+            'jobs' => JobListing::active()->get(),
+            'categories' => JobCategory::active()->get(),
+            'locations' => Location::active()->get(),
+            'jobTypes' => collect(JobType::cases())->map(fn ($c) => ['value' => $c->value, 'label' => ucwords(str_replace('_', ' ', $c->value))]),
+            'educationLevels' => collect(EducationLevel::cases())->map(fn ($c) => ['value' => $c->value, 'label' => ucwords(str_replace('_', ' ', $c->value))]),
+            'filters' => $request->only(['status', 'job_listing_id', 'user_id', 'search']),
+            'statusCounts' => $statusCounts,
+            'totalApplications' => $totalApplications,
+            'filterOptions' => [
+                'jobTypes' => collect(JobType::cases())->map(fn ($c) => ['value' => $c->value, 'label' => ucwords(str_replace('_', ' ', $c->value))]),
+                'educationLevels' => collect(EducationLevel::cases())->map(fn ($c) => ['value' => $c->value, 'label' => ucwords(str_replace('_', ' ', $c->value))]),
+            ],
+        ]);
     }
 
-    public function jobApplications(JobListing $jobListing, Request $request): JsonResponse
+    public function jobApplications(JobListing $jobListing, Request $request): Response
     {
         $this->authorizeApplication($jobListing);
 
-        return response()->json($jobListing->applications()->with('user')->latest()->paginate(15));
+        $applications = $jobListing->applications()->with('user')->latest()->paginate(15);
+
+        $statusCounts = $jobListing->applications()
+            ->selectRaw('status, count(*) as count')
+            ->groupBy('status')
+            ->pluck('count', 'status')
+            ->toArray();
+
+        return Inertia::render('Backend/Applications/JobApplications', [
+            'job' => $jobListing,
+            'applications' => $applications,
+            'statusCounts' => $statusCounts,
+            'filters' => $request->only(['status', 'search']),
+            'filterOptions' => [],
+        ]);
     }
 
-    public function show(Application $application): JsonResponse
+    public function show(Application $application): Response
     {
         $this->authorizeApplication($application->jobListing);
 
-        return response()->json($application->load(['user', 'jobListing', 'applicantProfile', 'statusTimelines']));
+        $application->load(['user', 'jobListing', 'applicantProfile', 'statusTimelines']);
+
+        $atsAnalysis = [
+            'score' => $application->ats_percentage ?? 0,
+            'matched_keywords' => $application->matched_keywords ?? [],
+            'missing_keywords' => $application->missing_keywords ?? [],
+            'suggestions' => [],
+            'calculated_at' => $application->ats_last_attempted_at,
+        ];
+
+        return Inertia::render('Backend/Applications/Show', [
+            'application' => $application,
+            'atsAnalysis' => $atsAnalysis,
+        ]);
     }
 
     public function updateStatus(Request $request, Application $application): JsonResponse
@@ -68,7 +117,7 @@ class ApplicationsController extends Controller
 
         $application->user->notify(new ApplicationStatusUpdated($application, $previous));
 
-        (new SimpleLogger())->info('application.status_updated', [
+        (new SimpleLogger)->info('application.status_updated', [
             'application_id' => $application->id,
             'previous_status' => $previous,
             'new_status' => $data['status'],
@@ -168,7 +217,7 @@ class ApplicationsController extends Controller
             'message' => 'required|string',
         ]);
 
-        (new SimpleLogger())->info('application.email_sent', [
+        (new SimpleLogger)->info('application.email_sent', [
             'application_id' => $application->id,
             'job_id' => $application->job_listing_id,
         ]);
@@ -189,7 +238,7 @@ class ApplicationsController extends Controller
             if (! $application || ! $this->canAccess($application->jobListing)) {
                 continue;
             }
-            (new SimpleLogger())->info('application.bulk_email_sent', [
+            (new SimpleLogger)->info('application.bulk_email_sent', [
                 'application_id' => $application->id,
             ]);
         }
@@ -219,7 +268,7 @@ class ApplicationsController extends Controller
                 : AtsCalculationStatus::Completed->value,
         ]);
 
-        (new SimpleLogger())->info('application.ats_recalculated', [
+        (new SimpleLogger)->info('application.ats_recalculated', [
             'application_id' => $application->id,
             'percentage' => $result['percentage'],
         ]);

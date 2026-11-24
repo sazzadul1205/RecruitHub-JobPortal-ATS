@@ -1,8 +1,8 @@
 <?php
 
-use App\Models\Application;
 use App\Models\ApplicantCv;
 use App\Models\ApplicantProfile;
+use App\Models\Application;
 use App\Models\JobListing;
 use App\Models\User;
 
@@ -52,7 +52,7 @@ it('an applicant can list their applications', function () {
     $response = $this->actingAs($user)->get('/apply');
 
     $response->assertStatus(200);
-    $response->assertJsonCount(3, 'data');
+    $response->assertInertia(fn ($page) => $page->where('applications.data', fn ($apps) => count($apps) === 3));
 });
 
 it('an applicant can update their pending application', function () {

@@ -5,12 +5,16 @@ namespace App\Http\Controllers;
 use App\Models\JobCategory;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class JobCategoryController extends Controller
 {
-    public function index(): JsonResponse
+    public function index(): Response
     {
-        return response()->json(JobCategory::latest()->paginate(15));
+        return Inertia::render('Backend/JobCategories/Index', [
+            'categories' => JobCategory::latest()->paginate(15),
+        ]);
     }
 
     public function getActive(): JsonResponse

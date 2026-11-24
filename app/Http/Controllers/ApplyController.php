@@ -3,9 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Enums\AtsCalculationStatus;
-use App\Models\Application;
 use App\Models\ApplicantCv;
 use App\Models\ApplicantProfile;
+use App\Models\Application;
 use App\Models\JobListing;
 use App\Models\StatusTimeline;
 use App\Services\ATSService;
@@ -14,29 +14,44 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class ApplyController extends Controller
 {
-    public function index(): JsonResponse
+    public function index(): Response
     {
         $applications = Application::where('user_id', auth()->id())
             ->with('jobListing')
             ->latest()
             ->paginate(15);
 
-        return response()->json($applications);
+        $stats = [
+            'total' => Application::where('user_id', auth()->id())->count(),
+            'pending' => Application::where('user_id', auth()->id())->where('status', 'pending')->count(),
+            'shortlisted' => Application::where('user_id', auth()->id())->where('status', 'shortlisted')->count(),
+            'rejected' => Application::where('user_id', auth()->id())->where('status', 'rejected')->count(),
+            'hired' => Application::where('user_id', auth()->id())->where('status', 'hired')->count(),
+            'average_ats_score' => Application::where('user_id', auth()->id())->whereNotNull('ats_percentage')->avg('ats_percentage') ?? 0,
+        ];
+
+        return Inertia::render('Backend/Apply/Index', [
+            'applications' => $applications,
+            'stats' => $stats,
+        ]);
     }
 
-    public function create(string $slug): JsonResponse
+    public function create(string $slug): Response
     {
         $jobListing = JobListing::where('slug', $slug)->firstOrFail();
         $profile = ApplicantProfile::where('user_id', auth()->id())->firstOrFail();
         $cvs = $profile->cvs()->where('status', 'active')->get();
 
-        return response()->json([
+        return Inertia::render('Backend/Apply/Create', [
             'job' => $jobListing,
             'cvs' => $cvs,
             'profile' => $profile,
+            'hasSoftDeleted' => false,
         ]);
     }
 
@@ -98,7 +113,7 @@ class ApplyController extends Controller
             'notes' => 'Application submitted.',
         ]);
 
-        (new SimpleLogger())->info('application.created', [
+        (new SimpleLogger)->info('application.created', [
             'application_id' => $application->id,
             'job_listing_id' => $jobListing->id,
         ]);
@@ -111,22 +126,51 @@ class ApplyController extends Controller
         return response()->json(Application::where('user_id', auth()->id())->onlyTrashed()->latest()->paginate(15));
     }
 
-    public function show(Application $application): JsonResponse
+    public function show(Application $application): Response
     {
         $this->authorizeApplication($application);
 
-        return response()->json($application->load('jobListing'));
+        $application->load(['jobListing', 'applicantProfile', 'statusTimelines']);
+
+        $atsDetails = [
+            'score' => $application->ats_percentage ?? 0,
+            'matched_keywords' => $application->matched_keywords ?? [],
+            'missing_keywords' => $application->missing_keywords ?? [],
+            'suggestions' => [],
+            'status' => $application->ats_calculation_status,
+        ];
+
+        $atsStatus = $application->ats_calculation_status;
+        $isDeleted = $application->trashed();
+
+        return Inertia::render('Backend/Apply/Show', [
+            'application' => $application,
+            'jobListing' => $application->jobListing,
+            'applicantProfile' => $application->applicantProfile,
+            'statusTimeline' => $application->statusTimelines,
+            'atsDetails' => $atsDetails,
+            'atsStatus' => $atsStatus,
+            'isDeleted' => $isDeleted,
+        ]);
     }
 
-    public function edit(Application $application): JsonResponse
+    public function edit(Application $application): Response
     {
         $this->authorizeApplication($application);
 
         if ($application->status !== 'pending') {
-            return response()->json(['message' => 'Only pending applications can be edited.'], 422);
+            abort(403, 'Only pending applications can be edited.');
         }
 
-        return response()->json($application);
+        $profile = ApplicantProfile::where('user_id', auth()->id())->firstOrFail();
+        $cvs = $profile->cvs()->where('status', 'active')->get();
+
+        return Inertia::render('Backend/Apply/Edit', [
+            'application' => $application,
+            'jobListing' => $application->jobListing,
+            'cvs' => $cvs,
+            'currentCvId' => $application->applicant_cv_id ?? null,
+        ]);
     }
 
     public function update(Request $request, Application $application): JsonResponse

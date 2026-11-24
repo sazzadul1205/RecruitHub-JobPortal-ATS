@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Application;
 use App\Models\JobCategory;
 use App\Models\JobListing;
 use App\Models\Location;
@@ -49,11 +50,16 @@ class PublicJobListingController extends Controller
             default => $query->latest(),
         };
 
-        return Inertia::render('seeker/jobs', [
-            'jobs' => $query->paginate(15)->withQueryString(),
+        return Inertia::render('Backend/PublicJobListing/Index', [
+            'jobListings' => $query->paginate(15)->withQueryString(),
             'categories' => JobCategory::active()->get(),
             'locations' => Location::active()->get(),
             'filters' => $request->only(['keyword', 'category', 'location', 'job_type', 'experience_level', 'sort']),
+            'stats' => [
+                'total_jobs' => $query->count(),
+                'total_views' => JobListing::sum('views_count'),
+                'total_applications' => Application::count(),
+            ],
         ]);
     }
 
@@ -69,8 +75,8 @@ class PublicJobListingController extends Controller
             ->limit(3)
             ->get();
 
-        return Inertia::render('seeker/job-show', [
-            'job' => $listing,
+        return Inertia::render('Backend/PublicJobListing/Show', [
+            'jobListing' => $listing,
             'related' => $related,
         ]);
     }

@@ -5,12 +5,16 @@ namespace App\Http\Controllers;
 use App\Models\Location;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class LocationController extends Controller
 {
-    public function index(): JsonResponse
+    public function index(): Response
     {
-        return response()->json(Location::latest()->paginate(15));
+        return Inertia::render('Backend/Locations/Index', [
+            'locations' => Location::latest()->paginate(15),
+        ]);
     }
 
     public function getActive(): JsonResponse

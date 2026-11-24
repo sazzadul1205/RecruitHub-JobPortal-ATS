@@ -9,7 +9,7 @@ it('can list job categories', function () {
     $response = $this->actingAs(User::factory()->create())->get('/backend/categories');
 
     $response->assertStatus(200);
-    $response->assertJsonCount(3, 'data');
+    $response->assertInertia(fn ($page) => $page->where('categories.data', fn ($cats) => count($cats) === 3));
 });
 
 it('can create a job category', function () {

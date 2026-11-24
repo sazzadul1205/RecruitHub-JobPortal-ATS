@@ -10,7 +10,7 @@ it('can list applications', function () {
     $response = $this->actingAs(User::factory()->create(['email' => 'admin@admin.test']))->get('/backend/applications');
 
     $response->assertStatus(200);
-    $response->assertJsonCount(3, 'data');
+    $response->assertInertia(fn ($page) => $page->where('applications.data', fn ($apps) => count($apps) === 3));
 });
 
 it('can update application status', function () {

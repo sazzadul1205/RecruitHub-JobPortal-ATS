@@ -9,7 +9,7 @@ it('can list job listings', function () {
     $response = $this->actingAs(User::factory()->create())->get('/backend/listing');
 
     $response->assertStatus(200);
-    $response->assertJsonCount(3, 'data');
+    $response->assertInertia(fn ($page) => $page->where('jobListings.data', fn ($jobs) => count($jobs) === 3));
 });
 
 it('can create a job listing', function () {
