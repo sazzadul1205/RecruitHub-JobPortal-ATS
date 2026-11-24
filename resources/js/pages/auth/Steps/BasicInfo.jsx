@@ -4,7 +4,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import {
   User, CloudUploadAlt, Calendar, Phone, VenusMars, MapMarkerAlt, IdCard,
-  BirthdayCake, Heartbeat, Image,
+  Cake, Heartbeat, Image,
 } from 'lucide-react';
 import Swal from 'sweetalert2';
 

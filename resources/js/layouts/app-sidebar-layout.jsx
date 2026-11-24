@@ -12,6 +12,9 @@ import {
   BarChart2,
   Target,
   LogOut,
+  User,
+  Settings,
+  FileText,
 } from 'lucide-react';
 
 const iconMap = {
@@ -23,6 +26,9 @@ const iconMap = {
   MapPin,
   BarChart2,
   Target,
+  User,
+  Settings,
+  FileText,
 };
 
 export default function AppSidebarLayout({ children, breadcrumbs = [] }) {
@@ -57,6 +63,12 @@ export default function AppSidebarLayout({ children, breadcrumbs = [] }) {
             ]
             : []),
         { title: 'Browse Jobs', url: '/backend/seeker/jobs', icon: 'Target' },
+        ...(!isAdmin
+            ? [
+                { title: 'My Profile', url: '/settings/profile', icon: 'User' },
+                { title: 'Complete Profile', url: '/profile/complete', icon: 'FileText' },
+            ]
+            : []),
     ];
 
     const page = usePage();
