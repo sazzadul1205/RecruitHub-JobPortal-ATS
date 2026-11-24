@@ -1,7 +1,7 @@
 <?php
 
-use App\Http\Controllers\ApplyController;
 use App\Http\Controllers\ApplicationsController;
+use App\Http\Controllers\ApplyController;
 use App\Http\Controllers\JobCategoryController;
 use App\Http\Controllers\JobListingController;
 use App\Http\Controllers\LocationController;
@@ -87,4 +87,11 @@ Route::middleware(['auth'])->prefix('backend')->name('backend.')->group(function
     Route::post('locations/bulk-restore', [LocationController::class, 'bulkRestore'])->name('locations.bulk-restore');
     Route::post('locations/bulk-activate', [LocationController::class, 'bulkActivate'])->name('locations.bulk-activate');
     Route::post('locations/bulk-deactivate', [LocationController::class, 'bulkDeactivate'])->name('locations.bulk-deactivate');
+});
+
+Route::prefix('api/jobs')->name('api.jobs.')->group(function () {
+    Route::get('popular', [PublicJobListingController::class, 'popular'])->name('popular');
+    Route::get('trending', [PublicJobListingController::class, 'trending'])->name('trending');
+    Route::get('categories', [PublicJobListingController::class, 'categories'])->name('categories');
+    Route::get('locations', [PublicJobListingController::class, 'locations'])->name('locations');
 });
