@@ -1,7 +1,7 @@
 // pages/auth/Steps/WorkExperience.jsx
 // Step 4 of the profile wizard — Work experience (optional, up to 3 entries).
 
-import { Plus, Trash2 as TrashAlt, CheckCircle, Building, Briefcase, Calendar, Suitcase } from 'lucide-react';
+import { Plus, Trash2 as TrashAlt, CheckCircle, Building, Briefcase, Calendar } from 'lucide-react';
 import Swal from 'sweetalert2';
 
 const MAX_EXPERIENCES = 3;
@@ -51,7 +51,7 @@ const WorkExperience = ({ data, setData }) => {
       <div className="flex items-center justify-between pb-4 border-b border-gray-100">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-orange-50 rounded-lg">
-            <Suitcase className="h-4 w-4 text-orange-600" />
+            <Briefcase className="h-4 w-4 text-orange-600" />
           </div>
           <div>
             <h2 className="text-base font-semibold text-gray-900">Where have you worked?</h2>
@@ -65,7 +65,7 @@ const WorkExperience = ({ data, setData }) => {
 
       {data.job_histories.length === 0 && (
         <div className="text-center py-8 border border-dashed border-orange-200 rounded-xl bg-orange-50/30">
-          <Suitcase className="h-6 w-6 text-orange-300 mx-auto mb-2" />
+          <Briefcase className="h-6 w-6 text-orange-300 mx-auto mb-2" />
           <p className="text-sm text-gray-600 font-medium">No experience yet</p>
           <p className="text-xs text-gray-400 mt-1">Fresher? Skip this step — you can add it later.</p>
         </div>

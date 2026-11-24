@@ -4,11 +4,9 @@
 import { useState, useEffect } from 'react';
 import {
   Edit2 as Edit, User, FileText, Linkedin, Github, Twitter, Facebook, Youtube,
-  FilePdf as FilePdfIcon, FileText as FileWordIcon, Star as StarIcon,
-  CheckCircle,
+  FileType as FilePdfIcon, FileText as FileWordIcon, Star as StarIcon,
+  CheckCircle, Briefcase, GraduationCap,
 } from 'lucide-react';
-import { Work as WorkIcon, School as SchoolIcon } from 'lucide-react';
-import { Suitcase as SuitcaseIcon, Star as AchievementIcon } from 'lucide-react';
 
 const ReviewPage = ({ data, onEditStep }) => {
   const [photoUrl, setPhotoUrl] = useState(null);
@@ -117,7 +115,7 @@ const ReviewPage = ({ data, onEditStep }) => {
           </div>
         </Section>
 
-        <Section icon={WorkIcon} title="Professional" step={1}>
+        <Section icon={Briefcase} title="Professional" step={1}>
           <div className="grid grid-cols-2 gap-3 mb-3">
             <Field label="Experience" value={data.experience_years !== '' ? `${data.experience_years} yr` : '—'} />
             <Field label="Job title" value={data.current_job_title} />
@@ -168,7 +166,7 @@ const ReviewPage = ({ data, onEditStep }) => {
           )}
         </Section>
 
-        <Section icon={SuitcaseIcon} title="Work Experience" step={3} count={data.job_histories?.length || 0}>
+        <Section icon={Briefcase} title="Work Experience" step={3} count={data.job_histories?.length || 0}>
           {!data.job_histories?.length ? (
             <p className="text-sm text-gray-400">No experience added</p>
           ) : (
@@ -185,7 +183,7 @@ const ReviewPage = ({ data, onEditStep }) => {
           )}
         </Section>
 
-        <Section icon={SchoolIcon} title="Education" step={4} count={data.education_histories?.length || 0}>
+        <Section icon={GraduationCap} title="Education" step={4} count={data.education_histories?.length || 0}>
           {!data.education_histories?.length ? (
             <p className="text-sm text-gray-400">No education added</p>
           ) : (
@@ -202,7 +200,7 @@ const ReviewPage = ({ data, onEditStep }) => {
           )}
         </Section>
 
-        <Section icon={AchievementIcon} title="Achievements" step={5} count={data.achievements?.length || 0}>
+        <Section icon={StarIcon} title="Achievements" step={5} count={data.achievements?.length || 0}>
           {!data.achievements?.length ? (
             <p className="text-sm text-gray-400">No achievements added</p>
           ) : (

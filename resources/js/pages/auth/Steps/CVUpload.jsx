@@ -4,7 +4,7 @@
 import { useState } from 'react';
 import {
   FileText as FilePdf, FileText as FileWord, FileText as FileAlt, Trash2 as TrashAlt,
-  Star as StarIcon, Star as RegStar, Loader2 as Spinner, CloudUpload as CloudUploadAlt,
+  Star as StarIcon, Loader2 as Spinner, CloudUpload,
   Lightbulb,
 } from 'lucide-react';
 import Swal from 'sweetalert2';
@@ -143,7 +143,7 @@ const CVUpload = ({ data, setData }) => {
             className="absolute inset-0 opacity-0 cursor-pointer"
           />
           <div className="p-2.5 bg-orange-50 group-hover:bg-orange-100 rounded-lg transition">
-            {uploading ? <Spinner className="h-4 w-4 text-orange-600 animate-spin" /> : <CloudUploadAlt className="h-4 w-4 text-orange-600" />}
+            {uploading ? <Spinner className="h-4 w-4 text-orange-600 animate-spin" /> : <CloudUpload className="h-4 w-4 text-orange-600" />}
           </div>
           <div className="flex-1">
             <p className="text-sm font-medium text-gray-800">
@@ -173,7 +173,7 @@ const CVUpload = ({ data, setData }) => {
                   }`}
                 title={cv.is_primary ? 'Primary CV' : 'Set as primary'}
               >
-                {cv.is_primary ? <StarIcon className="h-3 w-3" /> : <RegStar className="h-3 w-3" />}
+                {cv.is_primary ? <StarIcon className="h-3 w-3" /> : <StarIcon className="h-3 w-3 text-gray-300" />}
                 <span className="hidden sm:inline">{cv.is_primary ? 'Primary' : 'Set primary'}</span>
               </button>
 

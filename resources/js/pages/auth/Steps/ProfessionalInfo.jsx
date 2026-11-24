@@ -3,10 +3,9 @@
 
 import { useState, useRef, useEffect } from 'react';
 import {
-  Briefcase, Plus, Times, Check, Link, Linkedin, Github, Twitter, Facebook,
+  Briefcase, Plus, X, Check, Link, Linkedin, Github, Twitter, Facebook,
   Youtube, Medium, Dev, StackOverflow, Globe,
 } from 'lucide-react';
-import { Work } from 'lucide-react';
 
 const PLATFORMS = [
   { id: 'linkedin', name: 'LinkedIn', icon: Linkedin, color: 'text-[#0A66C2]', bg: 'bg-[#0A66C2]/10', border: 'border-[#0A66C2]/20', placeholder: 'https://linkedin.com/in/username' },
@@ -96,7 +95,7 @@ const ProfessionalInfo = ({ data, setData }) => {
         <div>
           <label className={labelCls}>
             <span className="inline-flex items-center gap-1.5">
-              <Work className="h-3.5 w-3.5 text-gray-400" />
+              <Briefcase className="h-3.5 w-3.5 text-gray-400" />
               Current job title
             </span>
           </label>

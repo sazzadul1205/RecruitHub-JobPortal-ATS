@@ -3,8 +3,8 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import {
-  User, CloudUploadAlt, Calendar, Phone, VenusMars, MapMarkerAlt, IdCard,
-  Cake, Heartbeat, Image,
+  User, CloudUpload, Calendar, Phone, MapPin, Badge,
+  HeartPulse, Image,
 } from 'lucide-react';
 import Swal from 'sweetalert2';
 
@@ -100,7 +100,7 @@ const BasicInfo = ({ data, setData }) => {
         {dragActive && (
           <div className="absolute inset-0 z-10 rounded-xl bg-orange-500/5 border border-orange-300 flex items-center justify-center pointer-events-none">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white border border-orange-200 shadow-sm">
-              <CloudUploadAlt className="h-3.5 w-3.5 text-orange-600" />
+              <CloudUpload className="h-3.5 w-3.5 text-orange-600" />
               <span className="text-xs font-medium text-orange-700">Drop image to upload</span>
             </div>
           </div>
@@ -114,7 +114,7 @@ const BasicInfo = ({ data, setData }) => {
         >
           {previewUrl ? <img src={previewUrl} alt="" className="h-full w-full object-cover" /> : <User className="h-5 w-5 text-gray-300" />}
           <span className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition flex items-center justify-center opacity-0 group-hover:opacity-100">
-            <CloudUploadAlt className="h-4 w-4 text-white" />
+            <CloudUpload className="h-4 w-4 text-white" />
           </span>
         </button>
 
@@ -144,13 +144,13 @@ const BasicInfo = ({ data, setData }) => {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className={labelCls}>
-            <IdCard className="h-3 w-3 text-gray-400" /> First name <span className="text-red-500">*</span>
+            <Badge className="h-3 w-3 text-gray-400" /> First name <span className="text-red-500">*</span>
           </label>
           <input type="text" value={data.first_name} onChange={(e) => setData('first_name', e.target.value)} className={inputCls} placeholder="John" />
         </div>
         <div>
           <label className={labelCls}>
-            <IdCard className="h-3 w-3 text-gray-400" /> Last name <span className="text-red-500">*</span>
+            <Badge className="h-3 w-3 text-gray-400" /> Last name <span className="text-red-500">*</span>
           </label>
           <input type="text" value={data.last_name} onChange={(e) => setData('last_name', e.target.value)} className={inputCls} placeholder="Doe" />
         </div>
@@ -192,7 +192,7 @@ const BasicInfo = ({ data, setData }) => {
 
         <div>
           <label className={labelCls}>
-            <Heartbeat className="h-3 w-3 text-red-400" /> Blood group
+            <HeartPulse className="h-3 w-3 text-red-400" /> Blood group
           </label>
           <select value={data.blood_type} onChange={(e) => setData('blood_type', e.target.value)} className={inputCls}>
             <option value="">Select blood group</option>
@@ -202,14 +202,14 @@ const BasicInfo = ({ data, setData }) => {
 
         <div className="sm:col-span-2">
           <label className={labelCls}>
-            <MapMarkerAlt className="h-3 w-3 text-gray-400" /> Address
+            <MapPin className="h-3 w-3 text-gray-400" /> Address
           </label>
           <textarea value={data.address} onChange={(e) => setData('address', e.target.value)} rows="2" className={`${inputCls} resize-none`} placeholder="City, Country or full address" />
         </div>
       </div>
 
       <p className="text-xs text-gray-400 flex items-center gap-1.5">
-        <Heartbeat className="h-3 w-3 text-rose-400" />
+        <HeartPulse className="h-3 w-3 text-rose-400" />
         We never share your personal details with anyone.
       </p>
     </div>

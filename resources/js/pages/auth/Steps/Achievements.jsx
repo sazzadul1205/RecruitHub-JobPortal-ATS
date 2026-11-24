@@ -1,7 +1,7 @@
 // pages/auth/Steps/Achievements.jsx
 // Step 6 of the profile wizard — Achievements (optional, up to 3 entries).
 
-import { Plus, Trash2 as TrashAlt, Trophy, AlignLeft, Lightbulb, Certificate, Medal, Award, Star } from 'lucide-react';
+import { Plus, Trash2 as TrashAlt, Trophy, AlignLeft, Lightbulb, Badge, Medal, Award, Star } from 'lucide-react';
 import Swal from 'sweetalert2';
 
 const MAX_ACHIEVEMENTS = 3;
@@ -30,7 +30,7 @@ const Achievements = ({ data, setData }) => {
   const labelCls = "flex items-center gap-1.5 text-xs font-medium text-gray-600 mb-1.5";
 
   const examples = [
-    { Icon: Certificate, color: 'text-purple-500', text: 'AWS Certified Solutions Architect' },
+    { Icon: Badge, color: 'text-purple-500', text: 'AWS Certified Solutions Architect' },
     { Icon: Medal, color: 'text-amber-500', text: 'Employee of the Month' },
     { Icon: Trophy, color: 'text-orange-500', text: 'Hackathon Winner 2024' },
     { Icon: Award, color: 'text-emerald-500', text: 'Google IT Support Certificate' },
