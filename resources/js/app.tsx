@@ -1,10 +1,11 @@
 import '../css/app.css';
 
 import { createInertiaApp } from '@inertiajs/react';
-import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
+import { StrictMode, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
-import { route as routeFn } from 'ziggy-js';
+import { type route as routeFn } from 'ziggy-js';
 import { initializeTheme } from './hooks/use-appearance';
+import { resolvePage } from './inertia-resolver';
 
 declare global {
     const route: typeof routeFn;
@@ -12,35 +13,45 @@ declare global {
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
-// Lazy-load pages with support for both .tsx and .jsx extensions
-const pages = import.meta.glob(['./pages/**/*.tsx', './pages/**/*.jsx'], { eager: false });
+/**
+ * Fires `app:ready` after React commits + browser paints two frames.
+ *
+ * The preloader partial listens for this event ONLY, and hides itself
+ * once received. Route-level navigation is handled by:
+ *   1. Inertia's 2px progress bar (see `progress` below)
+ *   2. Each section's own skeleton while its data / chunk loads
+ */
+export function AppReady({ children }: { children: React.ReactNode }) {
+    useEffect(() => {
+        let cancelled = false;
+        let pendingFrames: number[] = [];
 
-const resolvePage = (name: string) => {
-    const normalizedName = name.replace(/\\/g, '/');
-    const baseName = normalizedName.split('/').pop() || normalizedName;
-    const candidates = [
-        `./pages/${normalizedName}.jsx`,
-        `./pages/${normalizedName}.tsx`,
-        `./pages/${normalizedName}/${baseName}.jsx`,
-        `./pages/${normalizedName}/${baseName}.tsx`,
-        `./pages/${normalizedName}/index.jsx`,
-        `./pages/${normalizedName}/index.tsx`,
-    ];
+        const signalReady = () => {
+            if (cancelled) return;
 
-    const exactMatch = candidates.find((candidate) => pages[candidate]);
-    if (exactMatch) {
-        return resolvePageComponent(exactMatch, pages);
-    }
+            pendingFrames.forEach((id) => cancelAnimationFrame(id));
+            pendingFrames = [];
 
-    // Case-insensitive fallback
-    const lowerCaseName = normalizedName.toLowerCase();
-    const caseInsensitiveMatch = Object.keys(pages).find((candidate) => {
-        const candidateLower = candidate.toLowerCase();
-        return candidates.some((c) => candidateLower === c.toLowerCase());
-    });
+            const f1 = requestAnimationFrame(() => {
+                const f2 = requestAnimationFrame(() => {
+                    if (cancelled) return;
+                    window.dispatchEvent(new Event('app:ready'));
+                });
+                pendingFrames.push(f2);
+            });
+            pendingFrames.push(f1);
+        };
 
-    return resolvePageComponent(caseInsensitiveMatch ?? candidates[0], pages);
-};
+        signalReady();
+
+        return () => {
+            cancelled = true;
+            pendingFrames.forEach((id) => cancelAnimationFrame(id));
+        };
+    }, []);
+
+    return children;
+}
 
 createInertiaApp({
     title: (title) => `${title} - ${appName}`,
@@ -48,12 +59,18 @@ createInertiaApp({
     setup({ el, App, props }) {
         const root = createRoot(el);
 
-        root.render(<App {...props} />);
+        // The preloader only cares about the initial paint. Subsequent
+        // navigation rely on per-section skeletons without a global bar.
+
+        root.render(
+            <StrictMode>
+                <AppReady>
+                    <App {...props} />
+                </AppReady>
+            </StrictMode>,
+        );
     },
-    progress: {
-        color: '#4B5563',
-    },
+    progress: false,
 });
 
-// This will set light / dark mode on load...
 initializeTheme();
