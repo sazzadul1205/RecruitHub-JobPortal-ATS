@@ -1,158 +1,157 @@
+@import '@fontsource-variable/bricolage-grotesque';
+@import '@fontsource-variable/noto-sans-bengali';
 @import 'tailwindcss';
 
 @plugin 'tailwindcss-animate';
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 
-@custom-variant dark (&:is(.dark *));
+/*
+    CMS HTML / CSS sections can be authored with Tailwind utility classes that
+    an admin types by hand and saves into the database. Tailwind only emits the
+    classes it finds while scanning files, so a utility that exists purely in
+    the CMS would be dropped from the build and render completely unstyled.
 
-@theme {
-    --font-sans:
-        'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
-
-    --radius-lg: var(--radius);
-    --radius-md: calc(var(--radius) - 2px);
-    --radius-sm: calc(var(--radius) - 4px);
-
-    --color-background: var(--background);
-    --color-foreground: var(--foreground);
-
-    --color-card: var(--card);
-    --color-card-foreground: var(--card-foreground);
-
-    --color-popover: var(--popover);
-    --color-popover-foreground: var(--popover-foreground);
-
-    --color-primary: var(--primary);
-    --color-primary-foreground: var(--primary-foreground);
-
-    --color-secondary: var(--secondary);
-    --color-secondary-foreground: var(--secondary-foreground);
-
-    --color-muted: var(--muted);
-    --color-muted-foreground: var(--muted-foreground);
-
-    --color-accent: var(--accent);
-    --color-accent-foreground: var(--accent-foreground);
-
-    --color-destructive: var(--destructive);
-    --color-destructive-foreground: var(--destructive-foreground);
-
-    --color-border: var(--border);
-    --color-input: var(--input);
-    --color-ring: var(--ring);
-
-    --color-chart-1: var(--chart-1);
-    --color-chart-2: var(--chart-2);
-    --color-chart-3: var(--chart-3);
-    --color-chart-4: var(--chart-4);
-    --color-chart-5: var(--chart-5);
-
-    --color-sidebar: var(--sidebar-background);
-    --color-sidebar-foreground: var(--sidebar-foreground);
-    --color-sidebar-primary: var(--sidebar-primary);
-    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-    --color-sidebar-accent: var(--sidebar-accent);
-    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-    --color-sidebar-border: var(--sidebar-border);
-    --color-sidebar-ring: var(--sidebar-ring);
-}
+    The lines below force-generate the utilities an admin is realistically going
+    to type inside the section editor. Keep this list to classes that are not
+    already covered by source scanning, and prefer broad families over one-off
+    utilities so the bundle does not grow without bound.
+*/
+@source inline("{bg,text,border}-{slate,gray,zinc,neutral,stone,red,orange,amber,yellow,lime,green,emerald,teal,cyan,sky,blue,indigo,violet,purple,fuchsia,pink,rose}-{50,100,200,300,400,500,600,700,800,900}");
+@source inline("{bg,text,border}-{white,black,transparent,current,inherit}");
+@source inline("{hover:,focus:,focus-visible:,active:}{bg,text,border}-{slate,gray,zinc,neutral,stone,red,orange,amber,yellow,lime,green,emerald,teal,cyan,sky,blue,indigo,violet,purple,fuchsia,pink,rose}-{300,400,500,600,700,800}");
+@source inline("{hover:,focus:,focus-visible:,active:}{bg,text,border}-{white,black,transparent}");
+@source inline("{p,px,py,pt,pb,pl,pr,m,mx,my,mt,mb,ml,mr,gap}-{0,0.5,1,1.5,2,2.5,3,3.5,4,5,6,7,8,9,10,11,12,14,16,20,24}");
+@source inline("{w,h,min-w,min-h,max-w,max-h}-{full,screen,none,auto,xs,sm,md,lg,xl,2xl,3xl,4xl,5xl,6xl,7xl}");
+@source inline("rounded{-none,-sm,-md,-lg,-xl,-2xl,-3xl,-full}");
+@source inline("text-{xs,sm,base,lg,xl,2xl,3xl,4xl,5xl,6xl,7xl,8xl,9xl}");
+@source inline("font-{thin,extralight,light,normal,medium,semibold,bold,extrabold,black}");
+@source inline("{leading,tracking}-{tight,normal,relaxed,loose,none,wide,wider,widest,tighter}");
+@source inline("shadow-{sm,md,lg,xl,2xl,inner,none}");
+@source inline("opacity-{0,5,10,20,25,30,40,50,60,70,75,80,90,95,100}");
+@source inline("{flex,grid,hidden,block,inline,inline-block,inline-flex,table,contents,flow-root}");
+@source inline("{items,justify}-{start,end,center,between,around,evenly,baseline,stretch}");
+@source inline("col-span-{1,2,3,4,5,6,full}");
+@source inline("{overflow}-{auto,hidden,visible,scroll,x-auto,y-auto}");
+@source inline("{border}-{0,2,4,8}");
+@source inline("{whitespace}-{normal,nowrap,pre,pre-line,pre-wrap}");
+@source inline("{cursor}-{auto,default,pointer,not-allowed,grab}");
+@source inline("{list}-{none,disc,decimal}");
+@source inline("{sm:,md:,lg:,xl:,2xl:}{grid-cols,col-span}-{1,2,3,4,5,6,12,full}");
+@source inline("{sm:,md:,lg:,xl:,2xl:}{flex,grid,block,hidden}");
+@source inline("{sm:,md:,lg:,xl:,2xl:}{text}-{xs,sm,base,lg,xl,2xl,3xl,4xl,5xl,6xl}");
+@source inline("{sm:,md:,lg:,xl:,2xl:}{p,px,py,m,mx,my}-{0,2,4,6,8,10,12,16}");
+@source inline("{sm:,md:,lg:,xl:,2xl:}{gap,space-x,space-y}-{0,1,2,3,4,6,8,10,12}");
 
 /*
-  The default border color has changed to `currentColor` in Tailwind CSS v4,
-  so we've added these compatibility styles to make sure everything still
-  looks the same as it did with Tailwind CSS v3.
-
-  If we ever want to remove these styles, we need to add an explicit border
-  color utility to any element that depends on these defaults.
+    Height-based variants for short viewports (small laptops, split screens).
+    Sticky cards taller than the viewport can never be scrolled far enough to
+    expose their lower content, so these step the card down as height shrinks.
 */
-@layer base {
-    *,
-    ::after,
-    ::before,
-    ::backdrop,
-    ::file-selector-button {
-        border-color: var(--color-gray-200, currentColor);
+@custom-variant h-tall (@media (max-height: 900px));
+@custom-variant h-mid (@media (max-height: 780px));
+@custom-variant h-short (@media (max-height: 660px));
+
+/*
+    Sidebar flyout for the collapsed admin rail. Revealed on hover, so it fades
+    and slides in from the rail edge rather than popping into existence, which
+    would make it hard to tell which icon opened it.
+*/
+@keyframes flyout-in {
+    from {
+        opacity: 0;
+        transform: translateX(-6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
     }
 }
 
-:root {
-    --background: hsl(0, 0%, 100%);
-    --foreground: hsl(0, 0%, 3.9%);
-    --card: hsl(0, 0%, 100%);
-    --card-foreground: hsl(0, 0%, 3.9%);
-    --popover: hsl(0, 0%, 100%);
-    --popover-foreground: hsl(0, 0%, 3.9%);
-    --primary: hsl(0, 0%, 9%);
-    --primary-foreground: hsl(0, 0%, 98%);
-    --secondary: hsl(0, 0%, 96.1%);
-    --secondary-foreground: hsl(0, 0%, 9%);
-    --muted: hsl(0, 0%, 96.1%);
-    --muted-foreground: hsl(0, 0%, 45.1%);
-    --accent: hsl(0, 0%, 96.1%);
-    --accent-foreground: hsl(0, 0%, 9%);
-    --destructive: hsl(0, 84.2%, 60.2%);
-    --destructive-foreground: hsl(0, 0%, 98%);
-    --border: hsl(0, 0%, 92.8%);
-    --input: hsl(0, 0%, 89.8%);
-    --ring: hsl(0, 0%, 3.9%);
-    --chart-1: hsl(12, 76%, 61%);
-    --chart-2: hsl(173, 58%, 39%);
-    --chart-3: hsl(197, 37%, 24%);
-    --chart-4: hsl(43, 74%, 66%);
-    --chart-5: hsl(27, 87%, 67%);
-    --radius: 0.5rem;
-    --sidebar-background: hsl(0, 0%, 98%);
-    --sidebar-foreground: hsl(240, 5.3%, 30%);
-    --sidebar-primary: hsl(0, 0%, 10%);
-    --sidebar-primary-foreground: hsl(0, 0%, 98%);
-    --sidebar-accent: hsl(0, 0%, 94%);
-    --sidebar-accent-foreground: hsl(0, 0%, 30%);
-    --sidebar-border: hsl(0, 0%, 91%);
-    --sidebar-ring: hsl(217.2, 91.2%, 59.8%);
+@utility animate-flyout-in {
+    animation: flyout-in 150ms ease-out;
 }
 
-.dark {
-    --background: hsl(0, 0%, 3.9%);
-    --foreground: hsl(0, 0%, 98%);
-    --card: hsl(0, 0%, 3.9%);
-    --card-foreground: hsl(0, 0%, 98%);
-    --popover: hsl(0, 0%, 3.9%);
-    --popover-foreground: hsl(0, 0%, 98%);
-    --primary: hsl(0, 0%, 98%);
-    --primary-foreground: hsl(0, 0%, 9%);
-    --secondary: hsl(0, 0%, 14.9%);
-    --secondary-foreground: hsl(0, 0%, 98%);
-    --muted: hsl(0, 0%, 6.9%);
-    --muted-foreground: hsl(0, 0%, 63.9%);
-    --accent: hsl(0, 0%, 14.9%);
-    --accent-foreground: hsl(0, 0%, 98%);
-    --destructive: hsl(0, 84%, 60%);
-    --destructive-foreground: hsl(0, 0%, 98%);
-    --border: hsl(0, 0%, 14.9%);
-    --input: hsl(0, 0%, 14.9%);
-    --ring: hsl(0, 0%, 83.1%);
-    --chart-1: hsl(220, 70%, 50%);
-    --chart-2: hsl(160, 60%, 45%);
-    --chart-3: hsl(30, 80%, 55%);
-    --chart-4: hsl(280, 65%, 60%);
-    --chart-5: hsl(340, 75%, 55%);
-    --sidebar-background: hsl(0, 0%, 7%);
-    --sidebar-foreground: hsl(0, 0%, 80%);
-    --sidebar-primary: hsl(360, 100%, 100%);
-    --sidebar-primary-foreground: hsl(0, 0%, 100%);
-    --sidebar-accent: hsl(0, 0%, 15.9%);
-    --sidebar-accent-foreground: hsl(240, 4.8%, 95.9%);
-    --sidebar-border: hsl(0, 0%, 15.9%);
-    --sidebar-ring: hsl(217.2, 91.2%, 59.8%);
+@media (prefers-reduced-motion: reduce) {
+    .animate-flyout-in {
+        animation: none;
+    }
 }
 
 @layer base {
-    * {
-        @apply border-border;
+    html {
+        scroll-behavior: smooth;
+        overflow-y: scroll;
+        scrollbar-gutter: stable;
+        scrollbar-color: #94a3b8 #f1f5f9;
+        scrollbar-width: thin;
     }
 
-    body {
-        @apply bg-background text-foreground;
+    ::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
     }
+
+    ::-webkit-scrollbar-track {
+        background: #f1f5f9;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        border: 2px solid #f1f5f9;
+        border-radius: 9999px;
+        background: #94a3b8;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        background: #475569;
+    }
+
+    /* 
+        LOW PRIORITY DEFAULT: Buttons get cursor-pointer by default
+        BUT any Tailwind cursor class will override it
+        Using :where() gives it 0 specificity
+    */
+    button:where(:not([class*='cursor-'])) {
+        cursor: pointer;
+    }
+}
+
+* {
+    font-family: 'Bricolage Grotesque', 'Noto Sans Bengali', sans-serif;
+}
+
+/* =========================
+   FONT UTILITY HELPERS
+========================= */
+.bricolage-grotesque {
+    font-family: 'Bricolage Grotesque', 'Noto Sans Bengali', sans-serif;
+}
+
+/* font weights */
+.font-200 {
+    font-weight: 200;
+}
+
+.font-300 {
+    font-weight: 300;
+}
+
+.font-400 {
+    font-weight: 400;
+}
+
+.font-500 {
+    font-weight: 500;
+}
+
+.font-600 {
+    font-weight: 600;
+}
+
+.font-700 {
+    font-weight: 700;
+}
+
+.font-800 {
+    font-weight: 800;
 }
