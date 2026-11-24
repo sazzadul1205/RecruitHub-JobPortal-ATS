@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import {
   Edit2 as Edit, User, FileText, Linkedin, Github, Twitter, Facebook, Youtube,
   FilePdf as FilePdfIcon, FileText as FileWordIcon, Star as StarIcon,
-  CheckCircle2 as CheckCircle,
+  CheckCircle,
 } from 'lucide-react';
 import { Work as WorkIcon, School as SchoolIcon } from 'lucide-react';
 import { Suitcase as SuitcaseIcon, Star as AchievementIcon } from 'lucide-react';

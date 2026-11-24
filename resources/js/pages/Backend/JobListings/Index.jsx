@@ -10,20 +10,20 @@ import {
   Trash2,
   Edit3,
   Eye,
-  CheckCircle2,
+  CheckCircle,
   Filter,
   ChevronDown,
   ChevronUp,
-  Times,
-  CheckDouble,
+  X,
+  CheckCheck,
   Ban,
   Users,
   Search,
   Briefcase,
   MapPin,
   Calendar,
-  ToggleOn,
-  ToggleOff,
+  ToggleLeft,
+  ToggleRight,
   Shield,
 } from 'lucide-react';
 
@@ -684,7 +684,7 @@ export default function JobListingsIndex({
             <div className="bg-linear-to-r from-blue-50 to-indigo-50 rounded-xl shadow-lg p-3 sm:p-4 mb-4 sm:mb-6 border border-blue-200">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                 <div className="flex items-center gap-2 sm:gap-3">
-                  <CheckDouble className="text-blue-600" size={16} />
+                  <CheckCheck className="text-blue-600" size={16} />
                   <span className="font-semibold text-gray-900 text-sm sm:text-base">
                     {selectedJobs.length} job(s) selected
                   </span>
@@ -696,7 +696,7 @@ export default function JobListingsIndex({
                       disabled={isBulkProcessing}
                       className="flex-1 sm:flex-none px-3 sm:px-4 py-1.5 sm:py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all duration-200 flex items-center justify-center gap-1.5 sm:gap-2 disabled:opacity-50 text-xs sm:text-sm"
                     >
-                      <CheckCircle2 size={12} />
+                      <CheckCircle size={12} />
                       Activate
                     </button>
                   )}
@@ -739,7 +739,7 @@ export default function JobListingsIndex({
                   onClick={resetFilters}
                   className="text-xs sm:text-sm text-red-600 hover:text-red-800 flex items-center gap-1"
                 >
-                  <Times size={10} />
+                  <X size={10} />
                   Reset all
                 </button>
               </div>
@@ -1077,7 +1077,7 @@ export default function JobListingsIndex({
                                 disabled={togglingId === job.id}
                                 className={`text-xs sm:text-sm p-1.5 rounded hover:bg-gray-100 transition-colors ${togglingId === job.id ? 'opacity-50' : ''}`} title="Toggle Status"
                               >
-                                {job.is_active ? <ToggleOff size={14} className="text-red-600" /> : <ToggleOn size={14} className="text-green-600" />}
+                                {job.is_active ? <ToggleRight size={14} className="text-red-600" /> : <ToggleLeft size={14} className="text-green-600" />}
                               </button>
                             )}
                             {!trashed && canDelete && (
@@ -1097,7 +1097,7 @@ export default function JobListingsIndex({
                                 className="text-green-600 hover:text-green-700 text-sm"
                                 title="Restore"
                               >
-                                <CheckCircle2 size={14} className="text-green-600" />
+                                <CheckCircle size={14} className="text-green-600" />
                               </button>
                             )}
                           </div>

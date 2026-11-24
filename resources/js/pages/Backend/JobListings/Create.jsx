@@ -10,7 +10,7 @@ import {
   Plus,
   Shield,
   Briefcase,
-  Spinner,
+  Loader2,
   CheckCircle,
   ArrowRight,
 } from 'lucide-react';
@@ -393,7 +393,7 @@ export default function JobListingsCreate({ categories, locations }) {
                                 className="flex items-center gap-2 w-full md:w-auto px-5 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {isSubmitting ? (
-                                    <Spinner className="animate-spin" size={16} />
+                                    <Loader2 className="animate-spin" size={16} />
                                 ) : (
                                     <Plus size={16} />
                                 )}

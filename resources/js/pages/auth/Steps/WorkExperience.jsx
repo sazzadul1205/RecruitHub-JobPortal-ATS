@@ -1,7 +1,7 @@
 // pages/auth/Steps/WorkExperience.jsx
 // Step 4 of the profile wizard — Work experience (optional, up to 3 entries).
 
-import { Plus, Trash2 as TrashAlt, CheckCircle2 as CheckCircle, Building, Briefcase, Calendar, Suitcase } from 'lucide-react';
+import { Plus, Trash2 as TrashAlt, CheckCircle, Building, Briefcase, Calendar, Suitcase } from 'lucide-react';
 import Swal from 'sweetalert2';
 
 const MAX_EXPERIENCES = 3;
