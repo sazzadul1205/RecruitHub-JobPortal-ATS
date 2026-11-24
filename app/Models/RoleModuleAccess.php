@@ -2,9 +2,9 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class RoleModuleAccess extends Model
 {
@@ -28,8 +28,11 @@ class RoleModuleAccess extends Model
      * Available access levels in hierarchy order
      */
     public const ACCESS_NO_ACCESS = 'no_access';
+
     public const ACCESS_READ = 'read';
+
     public const ACCESS_WRITE = 'write';
+
     public const ACCESS_MANAGE = 'manage';
 
     /**

@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers\Backend;
 
-use App\Http\Controllers\Controller;
 use App\Enums\AtsCalculationStatus;
+use App\Http\Controllers\Controller;
 use App\Models\ApplicantCv;
 use App\Models\ApplicantProfile;
 use App\Models\Application;

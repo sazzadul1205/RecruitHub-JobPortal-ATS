@@ -66,8 +66,11 @@ class Application extends Model
      |========================================== */
 
     public const STATUS_PENDING = 'pending';
+
     public const STATUS_SHORTLISTED = 'shortlisted';
+
     public const STATUS_REJECTED = 'rejected';
+
     public const STATUS_HIRED = 'hired';
 
     public static array $statuses = [
@@ -82,8 +85,11 @@ class Application extends Model
      |========================================== */
 
     public const ATS_PENDING = 'pending';
+
     public const ATS_PROCESSING = 'processing';
+
     public const ATS_COMPLETED = 'completed';
+
     public const ATS_FAILED = 'failed';
 
     public static array $atsStatuses = [
@@ -204,7 +210,7 @@ class Application extends Model
             'employer_notes' => $notes,
         ]);
 
-        if (!$updated) {
+        if (! $updated) {
             return false;
         }
 
@@ -227,7 +233,7 @@ class Application extends Model
      */
     public function getActualResumePath(): ?string
     {
-        if (!empty($this->resume_path)) {
+        if (! empty($this->resume_path)) {
             return $this->resume_path;
         }
 
@@ -255,7 +261,7 @@ class Application extends Model
      */
     public function isAtsCalculationStuck(int $minutes = 30): bool
     {
-        if (!in_array($this->ats_calculation_status, [self::ATS_PENDING, self::ATS_PROCESSING])) {
+        if (! in_array($this->ats_calculation_status, [self::ATS_PENDING, self::ATS_PROCESSING])) {
             return false;
         }
 
@@ -274,7 +280,7 @@ class Application extends Model
     public function calculateATSScore(): bool
     {
         try {
-            if (!class_exists(ATSService::class)) {
+            if (! class_exists(ATSService::class)) {
                 $this->update([
                     'ats_calculation_status' => self::ATS_FAILED,
                     'ats_score' => [
@@ -294,7 +300,7 @@ class Application extends Model
 
             $this->loadMissing(['jobListing', 'applicantProfile']);
 
-            if (!$this->jobListing) {
+            if (! $this->jobListing) {
                 throw new \Exception('Job listing not found for ATS calculation');
             }
 
@@ -356,7 +362,7 @@ class Application extends Model
      */
     public function canBeUpdated(): bool
     {
-        return !in_array($this->status, [self::STATUS_HIRED, self::STATUS_REJECTED]);
+        return ! in_array($this->status, [self::STATUS_HIRED, self::STATUS_REJECTED]);
     }
 
     /* ==========================================
@@ -368,7 +374,7 @@ class Application extends Model
      */
     public function getResumeUrlAttribute(): ?string
     {
-        return $this->resume_path ? asset('storage/' . $this->resume_path) : null;
+        return $this->resume_path ? asset('storage/'.$this->resume_path) : null;
     }
 
     /**
@@ -376,7 +382,7 @@ class Application extends Model
      */
     public function getAtsScorePercentageAttribute(): int|float|null
     {
-        if (!$this->ats_score) {
+        if (! $this->ats_score) {
             return null;
         }
 

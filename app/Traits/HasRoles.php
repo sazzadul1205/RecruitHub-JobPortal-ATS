@@ -41,7 +41,7 @@ trait HasRoles
     public function hasAllRoles(array $roles): bool
     {
         foreach ($roles as $role) {
-            if (!$this->hasRole($role)) {
+            if (! $this->hasRole($role)) {
                 return false;
             }
         }
@@ -61,7 +61,7 @@ trait HasRoles
         }
 
         // Permissive mode: if user has no roles, grant all permissions
-        if (!$this->roles()->exists()) {
+        if (! $this->roles()->exists()) {
             return true;
         }
 

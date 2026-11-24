@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Application;
 use App\Models\JobListing;
 use Illuminate\Support\Str;
+use Smalot\PdfParser\Parser;
 
 class ATSService
 {
@@ -62,7 +63,7 @@ class ATSService
         }
 
         return (bool) preg_match(
-            '/(?<![\p{L}\p{N}])' . $keyword . '(?![\p{L}\p{N}])/ui',
+            '/(?<![\p{L}\p{N}])'.$keyword.'(?![\p{L}\p{N}])/ui',
             $text
         );
     }
@@ -85,9 +86,9 @@ class ATSService
             return '';
         }
 
-        if (class_exists(\Smalot\PdfParser\Parser::class)) {
+        if (class_exists(Parser::class)) {
             try {
-                $parser = new \Smalot\PdfParser\Parser();
+                $parser = new Parser;
                 $document = $parser->parseFile($path);
 
                 return $document->getText() ?? '';
@@ -106,7 +107,7 @@ class ATSService
         }
 
         try {
-            $zip = new \ZipArchive();
+            $zip = new \ZipArchive;
             if ($zip->open($path) !== true) {
                 return '';
             }
@@ -142,7 +143,7 @@ class ATSService
         $escapedArgs = array_map(fn ($arg) => escapeshellarg((string) $arg), $args);
         $full = implode(' ', array_merge([$command], $escapedArgs));
 
-        exec($full . ' 2>&1', $output, $returnCode);
+        exec($full.' 2>&1', $output, $returnCode);
 
         return $returnCode === 0 ? implode("\n", $output) : '';
     }
@@ -216,7 +217,7 @@ class ATSService
         $suggestions = [];
 
         if (! empty($missing)) {
-            $suggestions[] = 'Highlight these keywords: ' . implode(', ', array_slice($missing, 0, 5));
+            $suggestions[] = 'Highlight these keywords: '.implode(', ', array_slice($missing, 0, 5));
         }
 
         $suggestions[] = 'Consider adding a skills section';

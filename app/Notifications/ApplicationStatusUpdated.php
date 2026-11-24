@@ -13,8 +13,7 @@ class ApplicationStatusUpdated extends Notification
     public function __construct(
         public Application $application,
         public string $previousStatus,
-    ) {
-    }
+    ) {}
 
     public function via(object $notifiable): array
     {

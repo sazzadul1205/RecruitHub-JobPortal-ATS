@@ -66,11 +66,7 @@ class ApplicationsController extends Controller
 
     public function jobApplications(JobListing $jobListing, Request $request): Response
     {
-        $user = auth()->user();
-
-        if (! $user?->hasPermission('applications.job_applications')) {
-            abort(403, 'You do not have permission to view job applications.');
-        }
+        $this->authorizeApplication($jobListing, 'applications.job_applications');
 
         $applications = $jobListing->applications()->with('user')->latest()->paginate(15);
 
@@ -91,11 +87,7 @@ class ApplicationsController extends Controller
 
     public function show(Application $application): Response
     {
-        $user = auth()->user();
-
-        if (! $user?->hasPermission('applications.show')) {
-            abort(403, 'You do not have permission to view application details.');
-        }
+        $this->authorizeApplication($application->jobListing, 'applications.show');
 
         $application->load(['user', 'jobListing', 'applicantProfile', 'statusTimelines']);
 
@@ -115,11 +107,7 @@ class ApplicationsController extends Controller
 
     public function updateStatus(Request $request, Application $application): JsonResponse
     {
-        $user = auth()->user();
-
-        if (! $user?->hasPermission('applications.status.update')) {
-            abort(403, 'You do not have permission to update application status.');
-        }
+        $this->authorizeApplication($application->jobListing, 'applications.status.update');
 
         $data = $request->validate([
             'status' => 'required|in:pending,shortlisted,rejected,hired',
@@ -165,9 +153,7 @@ class ApplicationsController extends Controller
             if (! $application) {
                 continue;
             }
-            if (! $user?->hasPermission('applications.status.update')) {
-                continue;
-            }
+            $this->authorizeApplication($application->jobListing, 'applications.status.update');
 
             $previous = $application->status;
             $application->update(['status' => $data['status']]);
@@ -183,11 +169,7 @@ class ApplicationsController extends Controller
 
     public function destroy(Application $application): JsonResponse
     {
-        $user = auth()->user();
-
-        if (! $user?->hasPermission('applications.destroy')) {
-            abort(403, 'You do not have permission to delete applications.');
-        }
+        $this->authorizeApplication($application->jobListing, 'applications.destroy');
 
         $application->delete();
 
@@ -209,6 +191,7 @@ class ApplicationsController extends Controller
             if (! $application) {
                 continue;
             }
+            $this->authorizeApplication($application->jobListing, 'applications.destroy');
             $application->delete();
         }
 
@@ -217,11 +200,7 @@ class ApplicationsController extends Controller
 
     public function downloadResume(Application $application): JsonResponse
     {
-        $user = auth()->user();
-
-        if (! $user?->hasPermission('applications.download_resume')) {
-            abort(403, 'You do not have permission to download resumes.');
-        }
+        $this->authorizeApplication($application->jobListing, 'applications.download_resume');
 
         if (! file_exists(storage_path('app/'.$application->resume_path))) {
             return response()->json(['message' => 'Resume not found.'], 404);
@@ -246,6 +225,7 @@ class ApplicationsController extends Controller
             if (! $application) {
                 continue;
             }
+            $this->authorizeApplication($application->jobListing, 'applications.download_resume');
             if (file_exists(storage_path('app/'.$application->resume_path))) {
                 $paths[] = storage_path('app/'.$application->resume_path);
             }
@@ -256,11 +236,7 @@ class ApplicationsController extends Controller
 
     public function sendEmail(Request $request, Application $application): JsonResponse
     {
-        $user = auth()->user();
-
-        if (! $user?->hasPermission('applications.email.send')) {
-            abort(403, 'You do not have permission to send emails.');
-        }
+        $this->authorizeApplication($application->jobListing, 'applications.email.send');
 
         $request->validate([
             'subject' => 'required|string',
@@ -294,6 +270,7 @@ class ApplicationsController extends Controller
             if (! $application) {
                 continue;
             }
+            $this->authorizeApplication($application->jobListing, 'applications.email.send');
             (new SimpleLogger)->info('application.bulk_email_sent', [
                 'application_id' => $application->id,
             ]);
@@ -304,11 +281,7 @@ class ApplicationsController extends Controller
 
     public function recalculateAts(Request $request, Application $application, ATSService $atsService): JsonResponse
     {
-        $user = auth()->user();
-
-        if (! $user?->hasPermission('applications.recalculate_ats')) {
-            abort(403, 'You do not have permission to recalculate ATS scores.');
-        }
+        $this->authorizeApplication($application->jobListing, 'applications.recalculate_ats');
 
         $application->update([
             'ats_calculation_status' => AtsCalculationStatus::Processing->value,
@@ -338,11 +311,7 @@ class ApplicationsController extends Controller
 
     public function exportApplications(Request $request, JobListing $jobListing): JsonResponse
     {
-        $user = auth()->user();
-
-        if (! $user?->hasPermission('applications.export')) {
-            abort(403, 'You do not have permission to export applications.');
-        }
+        $this->authorizeApplication($jobListing, 'applications.export');
 
         $applications = $jobListing->applications()->with('user')->get();
 
@@ -355,12 +324,25 @@ class ApplicationsController extends Controller
 
     public function exportSingleApplication(Application $application): JsonResponse
     {
-        $user = auth()->user();
-
-        if (! $user?->hasPermission('applications.export_single')) {
-            abort(403, 'You do not have permission to export application.');
-        }
+        $this->authorizeApplication($application->jobListing, 'applications.export_single');
 
         return response()->json($application->load('user'));
+    }
+
+    protected function authorizeApplication(JobListing $jobListing, string $permission): void
+    {
+        $user = auth()->user();
+
+        if ($user?->isAdmin()) {
+            return;
+        }
+
+        if (! $user?->hasPermission($permission)) {
+            abort(403, 'You do not have permission to perform this action.');
+        }
+
+        if ($jobListing->user_id !== auth()->id()) {
+            abort(403, 'Unauthorized.');
+        }
     }
 }

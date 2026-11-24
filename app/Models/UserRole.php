@@ -93,7 +93,7 @@ class UserRole extends Pivot
      */
     public function isExpired(): bool
     {
-        return !$this->is_active ||
+        return ! $this->is_active ||
             ($this->expires_at && $this->expires_at <= now());
     }
 

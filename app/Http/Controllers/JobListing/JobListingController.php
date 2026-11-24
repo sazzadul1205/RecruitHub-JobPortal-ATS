@@ -2,16 +2,15 @@
 
 namespace App\Http\Controllers\JobListing;
 
-use App\Http\Controllers\Controller;
 use App\Enums\ExperienceLevel;
 use App\Enums\JobType;
+use App\Http\Controllers\Controller;
 use App\Models\Application;
 use App\Models\JobCategory;
 use App\Models\JobListing;
 use App\Models\Location;
 use App\Models\User;
 use App\Services\SimpleLogger;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -120,11 +119,7 @@ class JobListingController extends Controller
 
     public function adminShow(JobListing $jobListing): Response
     {
-        $user = auth()->user();
-
-        if (! $user?->hasPermission('job_listings.show')) {
-            abort(403, 'You do not have permission to view job details.');
-        }
+        $this->authorizeListing($jobListing, 'job_listings.show');
 
         $jobListing->load(['employer', 'category', 'locations', 'applications.user']);
 
@@ -157,11 +152,7 @@ class JobListingController extends Controller
 
     public function adminEdit(JobListing $jobListing): Response
     {
-        $user = auth()->user();
-
-        if (! $user?->hasPermission('job_listings.edit')) {
-            abort(403, 'You do not have permission to edit job listings.');
-        }
+        $this->authorizeListing($jobListing, 'job_listings.edit');
 
         return Inertia::render('Backend/JobListings/Edit', [
             'jobListing' => $jobListing,
@@ -172,11 +163,7 @@ class JobListingController extends Controller
 
     public function adminUpdate(Request $request, JobListing $jobListing): JsonResponse
     {
-        $user = auth()->user();
-
-        if (! $user?->hasPermission('job_listings.update')) {
-            abort(403, 'You do not have permission to update job listings.');
-        }
+        $this->authorizeListing($jobListing, 'job_listings.update');
 
         $data = $request->validate([
             'category_id' => 'nullable|exists:job_categories,id',
@@ -212,11 +199,7 @@ class JobListingController extends Controller
 
     public function adminDestroy(JobListing $jobListing): JsonResponse
     {
-        $user = auth()->user();
-
-        if (! $user?->hasPermission('job_listings.destroy')) {
-            abort(403, 'You do not have permission to delete job listings.');
-        }
+        $this->authorizeListing($jobListing, 'job_listings.destroy');
 
         $jobListing->delete();
 
@@ -227,11 +210,7 @@ class JobListingController extends Controller
 
     public function toggleActive(JobListing $jobListing): JsonResponse
     {
-        $user = auth()->user();
-
-        if (! $user?->hasPermission('job_listings.toggle_active')) {
-            abort(403, 'You do not have permission to change job status.');
-        }
+        $this->authorizeListing($jobListing, 'job_listings.toggle_active');
 
         $jobListing->update(['is_active' => ! $jobListing->is_active]);
 
@@ -240,11 +219,7 @@ class JobListingController extends Controller
 
     public function restore(JobListing $jobListing): JsonResponse
     {
-        $user = auth()->user();
-
-        if (! $user?->hasPermission('job_listings.restore')) {
-            abort(403, 'You do not have permission to restore job listings.');
-        }
+        $this->authorizeListing($jobListing, 'job_listings.restore');
 
         $jobListing->restore();
 
@@ -253,11 +228,7 @@ class JobListingController extends Controller
 
     public function forceDelete(JobListing $jobListing): JsonResponse
     {
-        $user = auth()->user();
-
-        if (! $user?->hasPermission('job_listings.force_delete')) {
-            abort(403, 'You do not have permission to permanently delete job listings.');
-        }
+        $this->authorizeListing($jobListing, 'job_listings.force_delete');
 
         $jobListing->forceDelete();
 
@@ -266,11 +237,7 @@ class JobListingController extends Controller
 
     public function applications(JobListing $jobListing): Response
     {
-        $user = auth()->user();
-
-        if (! $user?->hasPermission('job_listings.applications')) {
-            abort(403, 'You do not have permission to view applications.');
-        }
+        $this->authorizeListing($jobListing, 'job_listings.applications');
 
         $applications = $jobListing->applications()->with('user')->latest()->paginate(15);
 
@@ -395,5 +362,22 @@ class JobListingController extends Controller
             'dateRange' => 'all_time',
             'filters' => [],
         ]);
+    }
+
+    protected function authorizeListing(JobListing $jobListing, string $permission): void
+    {
+        $user = auth()->user();
+
+        if ($user?->isAdmin()) {
+            return;
+        }
+
+        if (! $user?->hasPermission($permission)) {
+            abort(403, 'You do not have permission to perform this action.');
+        }
+
+        if ($jobListing->user_id !== auth()->id()) {
+            abort(403, 'Unauthorized.');
+        }
     }
 }

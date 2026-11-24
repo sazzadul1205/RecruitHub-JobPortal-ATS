@@ -2,7 +2,6 @@
 
 use App\Http\Controllers\Backend\ApplicationsController;
 use App\Http\Controllers\Backend\ApplyController;
-use App\Http\Controllers\Backend\DashboardController;
 use App\Http\Controllers\Backend\JobCategoryController;
 use App\Http\Controllers\Backend\LocationController;
 use App\Http\Controllers\JobListing\JobListingController;

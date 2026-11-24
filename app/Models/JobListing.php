@@ -107,7 +107,7 @@ class JobListing extends Model
                 $counter = 1;
 
                 while (self::where('slug', $slug)->exists()) {
-                    $slug = $baseSlug . '-' . $counter++;
+                    $slug = $baseSlug.'-'.$counter++;
                 }
 
                 $job->slug = $slug;
@@ -115,13 +115,13 @@ class JobListing extends Model
         });
 
         static::updating(function (JobListing $job): void {
-            if ($job->isDirty('title') && !$job->isDirty('slug')) {
+            if ($job->isDirty('title') && ! $job->isDirty('slug')) {
                 $baseSlug = Str::slug($job->title);
                 $slug = $baseSlug;
                 $counter = 1;
 
                 while (self::where('slug', $slug)->where('id', '!=', $job->id)->exists()) {
-                    $slug = $baseSlug . '-' . $counter++;
+                    $slug = $baseSlug.'-'.$counter++;
                 }
 
                 $job->slug = $slug;
@@ -250,12 +250,12 @@ class JobListing extends Model
         }
 
         if ($this->salary_min && $this->salary_max) {
-            return number_format($this->salary_min) . ' - ' .
-                number_format($this->salary_max) . ' BDT';
+            return number_format($this->salary_min).' - '.
+                number_format($this->salary_max).' BDT';
         }
 
         if ($this->salary_min) {
-            return 'From ' . number_format($this->salary_min) . ' BDT';
+            return 'From '.number_format($this->salary_min).' BDT';
         }
 
         return 'Not specified';
@@ -282,7 +282,7 @@ class JobListing extends Model
      */
     public function canApply(): bool
     {
-        return $this->is_active && !$this->isExpired();
+        return $this->is_active && ! $this->isExpired();
     }
 
     /**
