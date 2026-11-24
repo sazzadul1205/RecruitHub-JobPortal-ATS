@@ -36,10 +36,12 @@ class AuthenticatedSessionController extends Controller
         $user = $request->user();
         $roleSlug = $user->role?->slug;
 
+        $hasProfile = $user->applicantProfile()->exists();
+
         return match ($roleSlug) {
-            'admin' => redirect()->intended(route('backend.listing.index', absolute: false)),
-            'employer' => redirect()->intended(route('backend.listing.index', absolute: false)),
-            default => redirect()->intended(route('backend.seeker.jobs.index', absolute: false)),
+            'admin' => $hasProfile ? redirect()->intended(route('backend.listing.index', absolute: false)) : redirect()->intended(route('profile.complete')),
+            'employer' => $hasProfile ? redirect()->intended(route('backend.listing.index', absolute: false)) : redirect()->intended(route('profile.complete')),
+            default => $hasProfile ? redirect()->intended(route('backend.seeker.jobs.index', absolute: false)) : redirect()->intended(route('profile.complete')),
         };
     }
 
